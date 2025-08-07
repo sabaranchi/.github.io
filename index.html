@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+  <!--maximum-scale=1.0 → ズーム倍率の上限を1に固定
+  user-scalable=no → ユーザーによるズーム操作を禁止
+  これらを組み合わせることで、スマホでのダブルタップズームが発生しなくなります。-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>習慣管理アプリ</title>
@@ -43,3 +47,4 @@
   </script>
 </body>
 </html>
+
