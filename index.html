@@ -1,0 +1,46 @@
+index.html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>習慣管理アプリ</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="apple-touch-icon" href="icon.png" />
+</head>
+<body>
+  <div class="container">
+    <div class="left">
+      <canvas id="radarChart"></canvas>
+    </div>
+    <div class="right">
+      <div id="categoryList"></div>
+
+      <div class="form">
+        <input id="categoryInput" type="text" placeholder="カテゴリ名を入力" />
+        <button onclick="addCategory()">追加</button>
+      </div>
+
+      <div class="buttons">
+        <button onclick="sortCategories()">並べ替え</button>
+        <button onclick="deleteCategories()">削除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="script.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(reg => console.log('Service Worker registered:', reg.scope))
+          .catch(err => console.error('Service Worker registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>
