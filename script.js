@@ -127,11 +127,39 @@ function render() {
   for (let cat of categories) {
     const div = document.createElement("div");
     div.className = "category-row";
+div.draggable = true;
+div.dataset.cat = cat; // 識別用
+
+div.addEventListener("dragstart", (e) => {
+  e.dataTransfer.setData("text/plain", cat);
+});
+
+div.addEventListener("dragover", (e) => {
+  e.preventDefault(); // ドロップ許可
+});
+
+div.addEventListener("drop", (e) => {
+  e.preventDefault();
+  const draggedCat = e.dataTransfer.getData("text/plain");
+  const targetCat = e.currentTarget.dataset.cat;
+
+  const fromIndex = categories.indexOf(draggedCat);
+  const toIndex = categories.indexOf(targetCat);
+
+  if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
+    const moved = categories.splice(fromIndex, 1)[0];
+    categories.splice(toIndex, 0, moved);
+    save();
+    render();
+  }
+});
+
 
     const label = document.createElement("span");
     label.textContent = `${cat}: ${scores[cat] || 0} pt`;
     label.style.width = "50%";
-    label.style.cursor = "pointer";
+    label.style.cursor
+     = "pointer";
     label.onclick = () => enableEdit(label, cat);
 
     const minus = document.createElement("button");
