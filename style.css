@@ -29,6 +29,12 @@ body {
   margin-top: 20px;
 }
 
+.zoom-safe-button {
+  font-size: 16px;
+  touch-action: manipulation;
+  user-select: none;
+}
+
 input {
   font-size: 16px;
   padding: 5px;

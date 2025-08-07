@@ -136,10 +136,12 @@ function render() {
 
     const minus = document.createElement("button");
     minus.textContent = "－";
+    minus.className = "zoom-safe-button";
     minus.onclick = () => updateScore(cat, -1);
 
     const plus = document.createElement("button");
     plus.textContent = "＋";
+    plus.className = "zoom-safe-button";
     plus.onclick = () => updateScore(cat, 1);
 
     div.append(label, minus, plus);
