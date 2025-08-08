@@ -209,7 +209,8 @@ function updateChart() {
       ],
     },
     options: {
-      responsive: true,
+      responsive: false,
+      maintainAspectRatio: false,
       scales: {
         r: {
           beginAtZero: true,
