@@ -50,12 +50,12 @@ button {
 .category-row {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
   justify-content: space-between;
 }
 
 .category-name {
   flex-grow: 1; /* ← これで残りのスペースを使える */
+  max-width: 70%;
 }
 
 
