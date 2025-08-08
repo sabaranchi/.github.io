@@ -154,12 +154,13 @@ div.addEventListener("drop", (e) => {
   }
 });
 
+    div.className = "score-row";
+    div.className = "score-row"; // ← ここでflexレイアウトを適用
 
     const label = document.createElement("span");
     label.textContent = `${cat}: ${scores[cat] || 0} pt`;
     label.style.width = "50%";
-    label.style.cursor
-     = "pointer";
+    label.style.cursor = "pointer";
     label.onclick = () => enableEdit(label, cat);
 
     const minus = document.createElement("button");
@@ -172,7 +173,13 @@ div.addEventListener("drop", (e) => {
     plus.className = "zoom-safe-button";
     plus.onclick = () => updateScore(cat, 1);
 
-    div.append(label, minus, plus);
+    // ボタンをまとめるコンテナ
+    const buttonGroup = document.createElement("div");
+    buttonGroup.className = "score-buttons";
+    buttonGroup.append(minus, plus);
+
+    // 全体に追加
+    div.append(label, buttonGroup);
     list.appendChild(div);
   }
 
