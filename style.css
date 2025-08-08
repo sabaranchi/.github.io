@@ -53,6 +53,11 @@ button {
   margin-bottom: 10px;
 }
 
+.category-name {
+  flex-grow: 1; /* ← これで残りのスペースを使える */
+}
+
+
 .category-row button {
   margin: 0 5px;
 }
