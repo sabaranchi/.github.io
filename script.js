@@ -13,10 +13,8 @@ function checkWeekRollover() {
   const currentWeek = getCurrentWeek();
   if (lastWeek && lastWeek !== currentWeek.toString()) {
     pastScores = { ...scores };
-    scores = {};
-    categories.forEach((c) => (scores[c] = 0));
     localStorage.setItem("pastScores", JSON.stringify(pastScores));
-    alert("週が変わったので、スコアをリセットしました！");
+    alert("週が変わったので、過去スコアを更新しました！");
   }
   localStorage.setItem("lastUpdatedWeek", currentWeek.toString());
 }
