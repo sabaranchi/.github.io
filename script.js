@@ -195,16 +195,28 @@ function goToRecord() {
   document.getElementById("recordArea").style.display = "block";
 }
 
-// ステータス表示（カテゴリ → ステータス）
-function renderStats() {
-  const container = document.getElementById("statusDisplay");
-  container.innerHTML = "";
+// カテゴリのポイントをもとにステータスを計算
+function calculateStatus() {
+  // 例として、カテゴリポイントをそのままステータスに割り当てる
+  // カテゴリ名ごとにステータス名を変えたり、合算や係数かけるのも可能
+  const status = {};
+  for (let cat of categories) {
+    // 例えばカテゴリ名が「体力」ならポイントを体力ステータスに
+    status[cat] = scores[cat] || 0;
+  }
+  return status;
+}
 
-  for (const cat of categories) {
-    const value = scores[cat] || 0;
-    const bar = "■".repeat(Math.min(value, 20)); // 最大20個まで表示
-    const line = `<div><strong>${cat}</strong>: ${bar} (${value})</div>`;
-    container.innerHTML += line;
+// ステータス表示（カテゴリ
+function renderStatus() {
+  const statusArea = document.getElementById("statusList");
+  const status = calculateStatus();
+
+  statusArea.innerHTML = "";
+  for (const [key, val] of Object.entries(status)) {
+    const div = document.createElement("div");
+    div.textContent = `${key}: ${val}`;
+    statusArea.appendChild(div);
   }
 }
 
