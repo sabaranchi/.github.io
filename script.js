@@ -187,7 +187,7 @@ div.addEventListener("drop", (e) => {
 function goToGame() {
   document.getElementById("recordArea").style.display = "none";
   document.getElementById("gameArea").style.display = "block";
-  renderStats();
+  renderStatus();
 }
 
 function goToRecord() {
