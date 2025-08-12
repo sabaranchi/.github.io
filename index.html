@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" href="icon.png" />
 </head>
 <body>
-  <div class="container">
+  <div id="recordArea" class="container">
     <div class="top">
       <canvas id="radarChart"></canvas>
     </div>
@@ -41,9 +41,9 @@
 
     <!-- ゲーム画面（初期は非表示） -->
     <div id="gameArea" style="display: none; margin-top: 30px;">
-      <h2>🧙‍♂️ ステータス画面</h2>
-      <div id="statusDisplay"></div>
-      <button onclick="goToRecord()">📋 記録画面に戻る</button>
+      <h2>ステータス画面</h2>
+      <div id="statusList"></div>
+      <button onclick="goToRecord()">記録画面に戻る</button>
     </div>
 
   </div>
