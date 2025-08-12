@@ -19,6 +19,7 @@
     <div class="top">
       <canvas id="radarChart"></canvas>
     </div>
+    
     <div class="bottom">
       <div id="categoryList"></div>
 
@@ -31,6 +32,20 @@
         <button onclick="deleteCategories()">削除</button>
       </div>
     </div>
+
+        
+    <!-- ゲーム画面への遷移ボタン -->
+    <div style="margin-top: 20px;">
+      <button onclick="goToGame()">🎮 ゲーム画面へ</button>
+    </div>
+
+    <!-- ゲーム画面（初期は非表示） -->
+    <div id="gameArea" style="display: none; margin-top: 30px;">
+      <h2>🧙‍♂️ ステータス画面</h2>
+      <div id="statusDisplay"></div>
+      <button onclick="goToRecord()">📋 記録画面に戻る</button>
+    </div>
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

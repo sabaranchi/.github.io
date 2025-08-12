@@ -184,6 +184,30 @@ div.addEventListener("drop", (e) => {
   updateChart();
 }
 
+function goToGame() {
+  document.getElementById("recordArea").style.display = "none";
+  document.getElementById("gameArea").style.display = "block";
+  renderStats();
+}
+
+function goToRecord() {
+  document.getElementById("gameArea").style.display = "none";
+  document.getElementById("recordArea").style.display = "block";
+}
+
+// ステータス表示（カテゴリ → ステータス）
+function renderStats() {
+  const container = document.getElementById("statusDisplay");
+  container.innerHTML = "";
+
+  for (const cat of categories) {
+    const value = scores[cat] || 0;
+    const bar = "■".repeat(Math.min(value, 20)); // 最大20個まで表示
+    const line = `<div><strong>${cat}</strong>: ${bar} (${value})</div>`;
+    container.innerHTML += line;
+  }
+}
+
 let chart;
 
 function updateChart() {
