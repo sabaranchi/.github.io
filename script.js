@@ -207,16 +207,85 @@ function calculateStatus() {
   return status;
 }
 
-// ステータス表示（カテゴリ
+let level = parseInt(localStorage.getItem("level")) || 1;
+let freePoints = parseInt(localStorage.getItem("freePoints")) || 0;
+
+function checkLevelUp() {
+  const minScore = Math.min(...categories.map(cat => scores[cat] || 0));
+  if (minScore > level) {
+    // レベルアップ
+    const gained = (minScore - level) * 2; // 1レベルごとに2ポイント付与
+    freePoints += gained;
+    level = minScore;
+    alert(`レベルが${level}になった！自由ポイントを${gained}pt獲得！`);
+    saveGameStats();
+  }
+}
+
+function saveGameStats() {
+  localStorage.setItem("level", level);
+  localStorage.setItem("freePoints", freePoints);
+}
+
+function checkWeekRollover() {
+  const currentWeek = getCurrentWeek();
+  if (lastWeek && lastWeek !== currentWeek.toString()) {
+    // ペナルティ判定
+    for (let cat of categories) {
+      const last = pastScores[cat] || 0;
+      const now = scores[cat] || 0;
+      if (now <= last) {
+        scores[cat] = Math.max(0, now - 1); // 減点
+      }
+    }
+
+    pastScores = { ...scores };
+    localStorage.setItem("pastScores", JSON.stringify(pastScores));
+    alert("週が変わったので、増えていないカテゴリはペナルティを受けました！");
+
+    save();
+    checkLevelUp(); // ペナルティ後にレベルアップ判定
+  }
+  localStorage.setItem("lastUpdatedWeek", currentWeek.toString());
+}
+
 function renderStatus() {
   const statusArea = document.getElementById("statusList");
   const status = calculateStatus();
-
   statusArea.innerHTML = "";
+
+  if (categories.length === 0) {
+    statusArea.textContent = "カテゴリがありません。記録画面で追加してください。";
+    return;
+  }
+
+  const levelDiv = document.createElement("div");
+  levelDiv.textContent = `レベル: ${level}`;
+  statusArea.appendChild(levelDiv);
+
+  const freeDiv = document.createElement("div");
+  freeDiv.textContent = `自由ポイント: ${freePoints}`;
+  statusArea.appendChild(freeDiv);
+
   for (const [key, val] of Object.entries(status)) {
     const div = document.createElement("div");
     div.textContent = `${key}: ${val}`;
     statusArea.appendChild(div);
+
+    // 自由ポイント割り振りボタン
+    if (freePoints > 0) {
+      const btn = document.createElement("button");
+      btn.textContent = "+";
+      btn.onclick = () => {
+        scores[key] += 1;
+        freePoints -= 1;
+        save();
+        saveGameStats();
+        renderStatus();
+        render();
+      };
+      div.appendChild(btn);
+    }
   }
 }
 
@@ -263,3 +332,6 @@ function updateChart() {
 }
 
 render();
+
+
+//レベルアップはすべてのカテゴリのポイントの中で最低なものに合わせる、レベルアップ時には自由に割り振れるステータスポイントを付与、
