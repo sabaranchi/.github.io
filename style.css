@@ -63,10 +63,6 @@ button {
   margin: 0 5px;
 }
 
-.category-name {
-  flex-grow: 1; /* ← これで残りのスペースを使える */
-}
-
 .score-row {
   display: flex;
   align-items: center;
@@ -84,9 +80,35 @@ button {
   gap: 6px;
 }
 
-@media (min-width: 768px) {
-  .category-name {
-    font-size: 16px;
-    max-width: 400px;
+/* スマホ対応（768px以下） */
+@media (max-width: 768px) {
+  .score-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .score-label {
+    width: 100% !important;
+  }
+
+  .score-buttons {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .mission-label {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+
+  .mission-check {
+    margin-left: 0 !important;
+  }
+
+  input[type="text"] {
+    width: 100% !important;
+    box-sizing: border-box;
   }
 }
+

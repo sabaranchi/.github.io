@@ -198,10 +198,9 @@ function render() {
     }
     // ミッション表示ラベル
     const missionLabel = document.createElement("span");
-    missionLabel.textContent = `🎯 ${weeklyMissions[cat].target || "ミッション未設定"}`;
-    missionLabel.style.marginLeft = "10px";
+    missionLabel.textContent = `${weeklyMissions[cat].target || "ミッション未設定"}`;
+    missionLabel.className = "mission-label";
     missionLabel.style.cursor = "pointer";
-    missionLabel.style.width = "150px";
     missionLabel.title = "クリックして編集";
 
     missionLabel.onclick = () => {
@@ -226,7 +225,7 @@ function render() {
     const missionCheck = document.createElement("input");
     missionCheck.type = "checkbox";
     missionCheck.checked = weeklyMissions[cat].cleared === true;
-    missionCheck.style.marginLeft = "5px";
+    missionCheck.style.marginLeft = "1px";
     missionCheck.addEventListener("change", (e) => {
       weeklyMissions[cat].cleared = e.target.checked;
       save();
