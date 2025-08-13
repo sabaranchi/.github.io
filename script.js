@@ -1,5 +1,7 @@
 let categories = JSON.parse(localStorage.getItem("categories")) || [];
 let scores = JSON.parse(localStorage.getItem("scores")) || {};
+let statusPoints = {}; // ステータス用ポイント（別管理）
+let weeklyMissions = {}; // {カテゴリ: {target: 数値, progress: 数値, lastCheck: タイムスタンプ}}
 let pastScores = JSON.parse(localStorage.getItem("pastScores")) || {};
 let lastWeek = localStorage.getItem("lastUpdatedWeek");
 let playerLevel = parseInt(localStorage.getItem("playerLevel") || "0");
@@ -26,9 +28,12 @@ checkWeekRollover();
 function save() {
   localStorage.setItem("categories", JSON.stringify(categories));
   localStorage.setItem("scores", JSON.stringify(scores));
+  localStorage.setItem("statusPoints", JSON.stringify(statusPoints));
+  localStorage.setItem("weeklyMissions", JSON.stringify(weeklyMissions));
   localStorage.setItem("playerLevel", playerLevel);
   localStorage.setItem("freePoints", freePoints);
 }
+
 
 function addCategory() {
   const input = document.getElementById("categoryInput");
@@ -229,27 +234,40 @@ function saveGameStats() {
   localStorage.setItem("freePoints", freePoints);
 }
 
+function setWeeklyMission(cat) {
+  const target = parseInt(prompt(`${cat} の週間目標を入力してください:`));
+  if (isNaN(target) || target < 0) return alert("正しい数値を入力してください");
+  weeklyMissions[cat] = { target: target, progress: 0 };
+  save();
+  alert(`${cat} のミッションを ${target} に設定しました`);
+}
+
+function updateMissionProgress(cat, delta) {
+  if (!weeklyMissions[cat]) weeklyMissions[cat] = { target: 0, progress: 0 };
+  weeklyMissions[cat].progress = Math.max(0, (weeklyMissions[cat].progress || 0) + delta);
+  save();
+}
+
 function checkWeekRollover() {
   const currentWeek = getCurrentWeek();
   if (lastWeek && lastWeek !== currentWeek.toString()) {
-    // ペナルティ判定
     for (let cat of categories) {
-      const last = pastScores[cat] || 0;
-      const now = scores[cat] || 0;
-      if (now <= last) {
-        scores[cat] = Math.max(0, now - 1); // 減点
+      const mission = weeklyMissions[cat];
+      if (!mission) continue;
+      if (mission.progress >= mission.target) {
+        statusPoints[cat] = (statusPoints[cat] || 0) + 3;
+      } else {
+        statusPoints[cat] = Math.max(0, (statusPoints[cat] || 0) - 5);
       }
+      mission.progress = 0; // 進捗リセット
     }
-
-    pastScores = { ...scores };
-    localStorage.setItem("pastScores", JSON.stringify(pastScores));
-    alert("週が変わったので、増えていないカテゴリはペナルティを受けました！");
-
+    alert("週が変わったのでミッション結果を反映しました！");
     save();
-    checkLevelUp(); // ペナルティ後にレベルアップ判定
   }
-  localStorage.setItem("lastUpdatedWeek", currentWeek.toString());
+  lastWeek = currentWeek.toString();
+  localStorage.setItem("lastUpdatedWeek", lastWeek);
 }
+
 
 function recalcLevel() {
   if (categories.length === 0) return;
@@ -271,37 +289,43 @@ function recalcLevel() {
   save();
 }
 
+function addCategory() {
+  const input = document.getElementById("categoryInput");
+  const name = input.value.trim();
+  if (!name) return alert("カテゴリ名を入力してください");
+  if (categories.includes(name)) return alert("すでに存在します");
+
+  categories.push(name);
+  scores[name] = 0;
+  statusPoints[name] = 0; // ステータス初期化
+  weeklyMissions[name] = { target: 0, progress: 0 }; // ミッション初期化
+
+  input.value = "";
+  save();
+  render();
+}
+
 function renderStatus() {
   const statusArea = document.getElementById("statusList");
-  const status = calculateStatus();
   statusArea.innerHTML = `
     <div>レベル: ${playerLevel}</div>
     <div>自由ポイント: ${freePoints}</div>
   `;
 
-  if (categories.length === 0) {
-    statusArea.textContent = "カテゴリがありません。記録画面で追加してください。";
-    return;
-  }
-
-  for (const [key, val] of Object.entries(status)) {
+  for (let cat of categories) {
     const div = document.createElement("div");
-    div.textContent = `${key}: ${val}`;
-    if (freePoints > 0) {
-      const plusBtn = document.createElement("button");
-      plusBtn.textContent = "+";
-      plusBtn.onclick = () => {
-        scores[key] = (scores[key] || 0) + 1;
-        freePoints--;
-        save();
-        localStorage.setItem("freePoints", freePoints);
-        renderStatus();
-      };
-      div.appendChild(plusBtn);
-    }
+    const statusVal = statusPoints[cat] || 0;
+    const mission = weeklyMissions[cat] || { target: 0, progress: 0 };
+
+    div.innerHTML = `
+      ${cat}: ${statusVal} pt
+      <br>ミッション: ${mission.progress}/${mission.target}
+      <button onclick="setWeeklyMission('${cat}')">ミッション設定</button>
+    `;
     statusArea.appendChild(div);
   }
 }
+
 
 let chart;
 
