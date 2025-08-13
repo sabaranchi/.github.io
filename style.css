@@ -67,12 +67,17 @@ button {
 .score-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap; /* 必要なら折り返す */
   gap: 4px;
 }
 
-.score-label {
+/* カテゴリ名とスコア */
+.score-row > span {
+  display: inline-block;
+}
+
+/* スコアのラベル */
+.score-row span:first-child {
   flex: 1 1 auto;
   min-width: 80px;
   cursor: pointer;
@@ -86,13 +91,14 @@ button {
 
 .mission-label {
   flex: 2 1 auto;
-  min-width: 100px;
+  min-width: 120px;
   cursor: pointer;
   white-space: nowrap; /* 無理に改行しない */
 }
 
 .mission-check {
   flex: 0 0 auto;
+  transform: scale(1.2);
 }
 
 /* スマホ（480px以下） */

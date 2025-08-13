@@ -220,7 +220,7 @@ function render() {
     const missionCheck = document.createElement("input");
     missionCheck.type = "checkbox";
     missionCheck.className = "mission-check";
-    missionCheck.checked = weeklyMissions[cat].cleared === true;
+    missionCheck.checked = weeklyMissions[cat]?.cleared || false;
     missionCheck.addEventListener("change", (e) => {
       weeklyMissions[cat] = weeklyMissions[cat] || {};
       weeklyMissions[cat].cleared = e.target.checked;
