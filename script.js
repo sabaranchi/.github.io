@@ -142,6 +142,20 @@ function render() {
     div.draggable = true;
     div.dataset.cat = cat; // 識別用
 
+    const missionInput = document.createElement("input");
+    missionInput.type = "text";
+    missionInput.placeholder = "ウィークリーミッションを入力";
+    missionInput.value = weeklyMissions[cat]?.target || "";
+    missionInput.style.marginLeft = "10px";
+    missionInput.style.width = "200px";
+
+    missionInput.addEventListener("change", (e) => {
+      weeklyMissions[cat].target = e.target.value;
+      save();
+    });
+
+    div.append(missionInput);
+
     div.addEventListener("dragstart", (e) => {
       e.dataTransfer.setData("text/plain", cat);
     });
@@ -306,24 +320,11 @@ function renderStatus() {
   for (let cat of categories) {
     const div = document.createElement("div");
     const statusVal = statusPoints[cat] || 0;
-
-    const missionInput = document.createElement("input");
-    missionInput.type = "text";
-    missionInput.placeholder = "ウィークリーミッションを入力";
-    missionInput.value = weeklyMissions[cat]?.target || "";
-    missionInput.style.marginLeft = "10px";
-    missionInput.style.width = "200px";
-
-    missionInput.addEventListener("change", (e) => {
-      weeklyMissions[cat].target = e.target.value;
-      save();
-    });
-
-    div.append(missionInput);
+    const mission = weeklyMissions[cat] || { target: 0, progress: 0 };
 
     div.innerHTML = `
       ${cat}: ${statusVal} pt
-      <br>ミッション: ${mission.input}
+      <br>ミッション: ${mission.progress}/${mission.target}
       <button onclick="setWeeklyMission('${cat}')">ミッション設定</button>
     `;
     statusArea.appendChild(div);
