@@ -57,49 +57,55 @@ button {
 .score-row {
   display: flex;
   align-items: center;
-  flex-wrap: wrap; /* 狭い画面で折り返し */
+  flex-wrap: nowrap;       /* 折り返し禁止 */
+  overflow-x: auto;        /* 横スクロール許可 */
   gap: 8px;
   margin-bottom: 12px;
+  width: 100%;
 }
 
 /* カテゴリ名 */
-.category-name {
-  flex: 1 1 20%;
+.score-row > span:first-child {
+  flex: 0 0 auto;
   min-width: 80px;
-  font-weight: bold;
   white-space: nowrap;
 }
 
-/* スコアボタンと値 */
-.score-buttons {
+/* スコアボタン */
+.score-row .score-buttons {
   display: flex;
-  align-items: center;
   gap: 4px;
   flex: 0 0 auto;
 }
 
-.score-value {
-  min-width: 24px;
-  text-align: center;
-}
-
-/* ミッションラベルと入力欄 */
-.mission-label {
+/* ミッションラベル */
+.score-row .mission-label {
   white-space: nowrap;
+  margin-right: 4px;
+  flex: 0 0 auto;
 }
 
-.mission-input {
-  flex: 1 1 30%;
-  min-width: 120px;
+/* ミッション入力欄 */
+.score-row .mission-input {
+  flex: 0 0 120px;
+  min-width: 100px;
   padding: 4px 8px;
   font-size: 14px;
 }
 
 /* チェックボックス */
-.mission-check {
+.score-row .mission-check {
   flex: 0 0 auto;
   width: 20px;
   height: 20px;
+}
+
+/* スマホでも横並びを維持 */
+@media (max-width: 600px) {
+  .score-row {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+  }
 }
 
 
