@@ -13,6 +13,10 @@ categories.forEach(cat => {
 let pastScores = JSON.parse(localStorage.getItem("pastScores")) || {};
 let lastWeek = localStorage.getItem("lastUpdatedWeek");
 let playerLevel = parseInt(localStorage.getItem("playerLevel") || "0");
+// RPGステータス名リスト
+const statusNames = ["ATK", "DEF", "HP", "MP", "SPD"];
+// カテゴリとステータスを紐付け
+let categoryToStatus = JSON.parse(localStorage.getItem("categoryToStatus")) || {};
 
 function getCurrentWeek() {
   const now = new Date();
@@ -228,6 +232,22 @@ function render() {
       save();
     });
 
+    // カテゴリ横にステータス選択
+    const statusSelect = document.createElement("select");
+    for (let s of statusNames) {
+      const option = document.createElement("option");
+      option.value = s;
+      option.textContent = s;
+      if (categoryToStatus[cat] === s) option.selected = true;
+      statusSelect.appendChild(option);
+    }
+    statusSelect.onchange = (e) => {
+      categoryToStatus[cat] = e.target.value;
+      localStorage.setItem("categoryToStatus", JSON.stringify(categoryToStatus));
+    };
+    div.appendChild(statusSelect);
+
+
     // 要素追加
     div.append(label, buttonGroup, missionLabel, missionCheck);
     list.appendChild(div);
@@ -267,7 +287,6 @@ function goToRecord() {
 
 // カテゴリのポイントをもとにステータスを計算
 function calculateStatus() {
-  // 例として、カテゴリポイントをそのままステータスに割り当てる
   // カテゴリ名ごとにステータス名を変えたり、合算や係数かけるのも可能
   //const statusPoints = {};
   //for (let cat of categories) {
@@ -293,23 +312,27 @@ function checkWeekRollover() {
     for (let cat of categories) {
       const mission = weeklyMissions[cat];
       if (!mission) continue;
-      // クリア情報がtrueなら＋3、それ以外は -5
+
+      // ミッション結果でステータスポイントに加算/減算
       if (mission.cleared === true) {
-        statusPoints[cat] = (statusPoints[cat] || 0) + 3;
+        const status = categoryToStatus[cat];
+        if (status) statusPoints[status] = (statusPoints[status] || 0) + 3;
       } else {
-        statusPoints[cat] = Math.max(0, (statusPoints[cat] || 0) - 5);
+        const status = categoryToStatus[cat];
+        if (status) statusPoints[status] = Math.max(0, (statusPoints[status] || 0) - 5);
       }
+
       // ミッション状態リセット
       weeklyMissions[cat].cleared = null;
       weeklyMissions[cat].lastCheckWeek = currentWeek;
     }
     alert("週が変わったのでミッション結果を反映しました！");
     save();
-    checkLevelUp();
   }
   lastWeek = currentWeek.toString();
   localStorage.setItem("lastUpdatedWeek", lastWeek);
 }
+
 
 
 function recalcLevel() {
