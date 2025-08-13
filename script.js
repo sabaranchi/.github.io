@@ -2,6 +2,7 @@ let categories = JSON.parse(localStorage.getItem("categories")) || [];
 let scores = JSON.parse(localStorage.getItem("scores")) || {};
 let statusPoints = JSON.parse(localStorage.getItem("statusPoints")) || {}; // ステータス用ポイント（別管理）
 let weeklyMissions = JSON.parse(localStorage.getItem("weeklyMissions")) || {}; // {カテゴリ: {target: 数値, progress: 数値, lastCheck: タイムスタンプ}}
+let missionPoints = JSON.parse(localStorage.getItem("missionPoints")) || {}; // ミッションなどで得られるポイント（スコアとは別）
 if (!weeklyMissions) {
   weeklyMissions = {};
 }
@@ -240,6 +241,22 @@ function render() {
   updateChart();
 }
 
+const menuBtn = document.getElementById("menuBtn");
+const gameMenu = document.getElementById("gameMenu");
+const assignArea = document.getElementById("assignCategoryArea");
+const closeMenuBtn = document.getElementById("closeMenuBtn");
+
+menuBtn.onclick = () => {
+  menuBtn.style.display = "none"; // メニューボタン非表示
+  gameMenu.style.display = "block";
+};
+
+closeMenuBtn.onclick = () => {
+  gameMenu.style.display = "none";
+  assignArea.style.display = "none"; // 割り当て画面も同時に非表示
+  menuBtn.style.display = "inline-block"; // メニュー再表示
+};
+
 
 async function askMissionClearStatus() {
   for (let cat of categories) {
@@ -270,13 +287,16 @@ function goToRecord() {
 }
 
 // カテゴリのポイントをもとにステータスを計算
-function calculateStatus(cat) {
-  // カテゴリ名ごとにステータス名を変えたり、合算や係数かけるのも可能
+function calculateStatus() {
+  // 各カテゴリのスコア + ミッションポイントを合計してステータスにする
   for (let cat of categories) {
-    statusPoints[cat] = scores[cat] || 0;
+    const score = scores[cat] || 0;
+    const mp = missionPoints[cat] || 0;
+    statusPoints[cat] = score + mp; // 合計で表示
   }
   return statusPoints;
 }
+
 
 function checkLevelUp() {
   const minScore = Math.min(...categories.map(cat => scores[cat] || 0));
@@ -297,60 +317,24 @@ function checkWeekRollover() {
 
       // ミッション結果でステータスポイントに加算/減算
       if (mission.cleared === true) {
-        const status = categoryToStatus[cat];
-        if (status) statusPoints[status] = (statusPoints[status] || 0) + 3;
+        missionPoints[cat] = (missionPoints[cat] || 0) + 3;
       } else {
-        const status = categoryToStatus[cat];
-        if (status) statusPoints[status] = Math.max(0, (statusPoints[status] || 0) - 5);
+        missionPoints[cat] = Math.max(0, (missionPoints[cat] || 0) - 5);
       }
-
+     
       // ミッション状態リセット
       weeklyMissions[cat].cleared = null;
       weeklyMissions[cat].lastCheckWeek = currentWeek;
     }
     alert("週が変わったのでミッション結果を反映しました！");
     save();
+    recalcLevel();
   }
   lastWeek = currentWeek.toString();
   localStorage.setItem("lastUpdatedWeek", lastWeek);
 }
 
-//レベル計算
-function recalcLevel() {
-  if (categories.length === 0) return;
-
-  // 割り当て済みカテゴリだけを使う
-  const relevantScores = categories
-    .filter(cat => categoryToStatus[cat])
-    .map(cat => scores[cat] || 0);
-
-  if (relevantScores.length === 0) return;
-
-  const minScore = Math.min(...relevantScores);
-
-  if (minScore > playerLevel) {
-    playerLevel = minScore;
-    alert(`レベル${playerLevel}にアップ！`);
-  } else if (minScore < playerLevel) {
-    playerLevel = minScore;
-    alert(`レベルが${playerLevel}に下がりました…`);
-  }
-  save();
-}
-
-
-function renderStatus() {
-  const statusArea = document.getElementById("statusList");
-  statusArea.innerHTML = `<div>レベル: ${playerLevel}</div>`;
-
-  for (let cat of categories) {
-    const div = document.createElement("div");
-    div.innerHTML = `${cat}: ${calculateStatus(cat) || 0} pt`;
-    statusArea.appendChild(div);
-  }
-}
-
-//カテゴリ割り当て機能
+//カテゴリ割り当て
 document.getElementById("assignCategoryBtn").onclick = () => {
   const area = document.getElementById("assignCategoryArea");
   area.innerHTML = "";
@@ -384,6 +368,42 @@ document.getElementById("assignCategoryBtn").onclick = () => {
     area.appendChild(div);
   }
 };
+
+//レベル計算
+function recalcLevel() {
+  if (categories.length === 0) return;
+
+  // 割り当て済みカテゴリだけを使う
+  const relevantScores = categories
+    .filter(cat => categoryToStatus[cat])
+    .map(cat => scores[cat] || 0);
+
+  if (relevantScores.length === 0) return;
+
+  const minScore = Math.min(...relevantScores);
+
+  if (minScore > playerLevel) {
+    playerLevel = minScore;
+    alert(`レベル${playerLevel}にアップ！`);
+  } else if (minScore < playerLevel) {
+    playerLevel = minScore;
+    alert(`レベルが${playerLevel}に下がりました…`);
+  }
+  save();
+}
+
+
+function renderStatus() {
+  const statusArea = document.getElementById("statusList");
+  const status = calculateStatus();
+  statusArea.innerHTML = `<div>レベル: ${playerLevel}</div>`;
+
+  for (const [key, val] of Object.entries(status)) {
+    const div = document.createElement("div");
+    div.textContent = `${key}: ${val} pt`; // val は数値になっているので [object Object] にはならない
+    statusArea.appendChild(div);
+  }
+}
 
 
 let chart;
