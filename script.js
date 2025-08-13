@@ -87,6 +87,7 @@ function sortCategories() {
 function updateScore(cat, delta) {
   scores[cat] = Math.max(0, (scores[cat] || 0) + delta);
   recalcLevel();
+  renderStatus();  // ステータス再描画
   save();
   render();
 }
@@ -292,7 +293,7 @@ function goToRecord() {
 
 // カテゴリのポイントをもとにステータスを計算
 function calculateStatus() {
-  const statusPoints = {};
+  const result = {};
   for (const stat of statusNames) {
     const cat = statusPoints[stat];
     if (!cat) {
@@ -301,10 +302,10 @@ function calculateStatus() {
       // 各カテゴリのスコア + ミッションポイントを合計してステータスにする
       const score = scores[cat] || 0;
       const mp = missionPoints[cat] || 0;
-      statusPoints[stat] = score + mp;
+      result[stat] = score + mp;
     }
   }
-  return statusPoints;
+  return result;
 }
 
 function checkWeekRollover() {
