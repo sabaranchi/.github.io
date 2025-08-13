@@ -102,21 +102,7 @@ button {
   height: 20px;
 }
 
-/* スマホ対応 */
-@media (max-width: 600px) {
-  .score-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 
-  .score-buttons {
-    justify-content: flex-start;
-  }
-
-  .mission-input {
-    width: 100%;
-  }
-}
 
 
 
