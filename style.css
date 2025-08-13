@@ -57,8 +57,7 @@ button {
 .score-row {
   display: flex;
   align-items: center;
-  flex-wrap: nowrap;       /* 折り返し禁止 */
-  overflow-x: auto;        /* 横スクロール許可 */
+  flex-wrap: nowrap;
   gap: 8px;
   margin-bottom: 12px;
   width: 100%;
@@ -67,9 +66,8 @@ button {
 /* カテゴリ名 */
 .score-row > span:first-child {
   flex: 0 0 auto;
-  min-width: 60px;         /* 少し小さめに */
+  min-width: 60px;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
 /* スコアボタン */
@@ -77,50 +75,58 @@ button {
   display: flex;
   gap: 4px;
   flex: 0 0 auto;
-  flex-shrink: 0;
 }
 
 /* ミッションラベル */
 .score-row .mission-label {
   white-space: nowrap;
   margin-right: 4px;
-  flex: 0 0 auto;
-  flex-shrink: 0;
 }
 
 /* ミッション入力欄 */
 .score-row .mission-input {
-  flex: 0 0 auto;
-  min-width: 80px;         /* 最小幅を少し縮小 */
+  min-width: 100px;
   padding: 4px 6px;
   font-size: 14px;
-  flex-shrink: 0;
 }
 
 /* チェックボックス */
 .score-row .mission-check {
-  flex: 0 0 auto;
   width: 20px;
   height: 20px;
-  flex-shrink: 0;
 }
 
-/* スマホでも横並びを維持 */
+/* --- スマホ用 2段レイアウト --- */
 @media (max-width: 600px) {
   .score-row {
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto;        /* 横スクロール必須 */
+    flex-wrap: wrap; /* 上下段構成を許可 */
   }
-  .score-row > * {
-    flex-shrink: 0;          /* 縮ませない */
+
+  /* 上段: カテゴリ名・ポイント・±ボタン */
+  .score-row > span:first-child,
+  .score-row .score-buttons {
+    order: 1;
+  }
+
+  /* 下段: ミッション欄・チェックボックス */
+  .score-row .mission-label,
+  .score-row .mission-input,
+  .score-row .mission-check {
+    order: 2;
+  }
+
+  /* 上段要素は1行に収める */
+  .score-row > span:first-child,
+  .score-row .score-buttons {
+    flex: 0 0 auto;
+  }
+
+  /* 下段は横並び */
+  .score-row .mission-label,
+  .score-row .mission-input,
+  .score-row .mission-check {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 4px;
   }
 }
-
-
-
-
-
-
-
-
