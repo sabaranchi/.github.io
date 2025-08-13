@@ -206,12 +206,10 @@ function render() {
       input.value = weeklyMissions[cat].target || "";
       input.className = "mission-label";
       input.onblur = () => {
-        weeklyMissions[cat].target = input.value.trim();
+        weeklyMissions[cat] = weeklyMissions[cat] || {};
+        weeklyMissions[cat].target = input.value;
         save();
         render(); // 再描画でラベルに戻す
-      };
-      input.onkeydown = (e) => {
-        if (e.key === "Enter") input.blur();
       };
       missionLabel.replaceWith(input);
       input.focus();
@@ -221,9 +219,10 @@ function render() {
     // クリアチェックボックス
     const missionCheck = document.createElement("input");
     missionCheck.type = "checkbox";
+    missionCheck.className = "mission-check";
     missionCheck.checked = weeklyMissions[cat].cleared === true;
-    missionCheck.style.marginLeft = "1px";
     missionCheck.addEventListener("change", (e) => {
+      weeklyMissions[cat] = weeklyMissions[cat] || {};
       weeklyMissions[cat].cleared = e.target.checked;
       save();
     });

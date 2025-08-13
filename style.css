@@ -87,6 +87,8 @@ button {
 .mission-label {
   flex: 2 1 auto;
   min-width: 100px;
+  cursor: pointer;
+  white-space: nowrap; /* 無理に改行しない */
 }
 
 .mission-check {
