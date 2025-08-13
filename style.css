@@ -58,7 +58,7 @@ button {
   display: flex;
   align-items: center;  /* 高さを中央揃え */
   flex-wrap: wrap;      /* 画面幅が狭い場合は折り返す */
-  gap: 8px;             /* 要素間のスペース */
+  gap: 6px;             /* 要素間のスペース */
   margin-bottom: 8px;   /* 行間の余白 */
 }
 
