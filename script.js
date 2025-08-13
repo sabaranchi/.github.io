@@ -294,7 +294,7 @@ function goToRecord() {
 function calculateStatus() {
   const statusPoints = {};
   for (const stat of statusNames) {
-    const cat = statMapping[stat];
+    const cat = statusPoints[stat];
     if (!cat) {
       statusPoints[stat] = 0; // 未割り当ては0
     } else {
@@ -305,17 +305,6 @@ function calculateStatus() {
     }
   }
   return statusPoints;
-}
-
-
-function checkLevelUp() {
-  const minScore = Math.min(...categories.map(cat => scores[cat] || 0));
-  if (minScore > level) {
-    // レベルアップ
-    level = minScore;
-    alert(`レベルが${level}になった！`);
-    saveGameStats();
-  }
 }
 
 function checkWeekRollover() {
@@ -378,9 +367,11 @@ function renderAssignCategories() {
     }
 
     select.onchange = () => {
-      statusPoints[stat] = select.value;
+      statusPoints[stat] = select.value; // ステータス → カテゴリ
+      categoryToStatus[select.value] = stat; // カテゴリ → ステータス
       save(); // 必要なら localStorage に保存
       renderStatus(); // ステータス更新
+      recalcLevel();// レベルも再計算
     };
 
     div.append(label, select);
