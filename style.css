@@ -96,37 +96,40 @@ button {
   height: 20px;
 }
 
-/* --- スマホ用 2段レイアウト --- */
+/* --- スマホ用 2段レイアウト固定 --- */
 @media (max-width: 600px) {
   .score-row {
-    flex-wrap: wrap; /* 上下段構成を許可 */
+    flex-wrap: wrap;
   }
 
-  /* 上段: カテゴリ名・ポイント・±ボタン */
+  /* 上段: カテゴリ名 + ポイント + ±ボタン */
   .score-row > span:first-child,
   .score-row .score-buttons {
     order: 1;
+    flex: 0 0 auto;
   }
 
-  /* 下段: ミッション欄・チェックボックス */
+  /* 下段: ミッション欄 + チェックボックス */
   .score-row .mission-label,
   .score-row .mission-input,
   .score-row .mission-check {
     order: 2;
-  }
-
-  /* 上段要素は1行に収める */
-  .score-row > span:first-child,
-  .score-row .score-buttons {
     flex: 0 0 auto;
   }
 
-  /* 下段は横並び */
+  /* 上段グループ全体を1行に収める */
+  .score-row > span:first-child,
+  .score-row .score-buttons {
+    margin-bottom: 4px;
+  }
+
+  /* 下段は横並びで1行 */
   .score-row .mission-label,
   .score-row .mission-input,
   .score-row .mission-check {
     display: inline-flex;
     align-items: center;
-    margin-top: 4px;
+    margin-right: 4px;
   }
 }
+

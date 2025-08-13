@@ -86,6 +86,7 @@ function updateScore(cat, delta) {
   render();
 }
 
+/*prompt用
 function renameCategory(oldName) {
   const newName = prompt(`「${oldName}」の新しい名前を入力:`);
   if (!newName) return;
@@ -114,7 +115,7 @@ function renameCategory(oldName) {
       weeklyMissions[cat] = weeklyMissions[cat] || {};
       weeklyMissions[cat].target = input.value;
       save();
-      render(); // 再描画でラベルに戻す
+      render(); // 再描画で戻す
     };
     newName.replaceWith(input);
     input.focus();
@@ -122,7 +123,7 @@ function renameCategory(oldName) {
   save();
   render();
 }
-
+*/
 
 function enableEdit(labelElement, oldName) {
   const input = document.createElement("input");
@@ -131,30 +132,43 @@ function enableEdit(labelElement, oldName) {
   input.style.width = "50%";
   input.style.fontSize = "16px";
 
-  // Enterキーで確定
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      const newName = input.value.trim();
-      if (!newName) return alert("名前が空です");
-      if (categories.includes(newName)) return alert("すでに存在しています");
+  const confirmEdit = () => {
+    const newName = input.value.trim();
+    if (!newName || newName === oldName) return render();
+    if (categories.includes(newName)) return alert("すでに存在しています");
 
-      const idx = categories.indexOf(oldName);
-      if (idx !== -1) categories[idx] = newName;
+    const idx = categories.indexOf(oldName);
+    if (idx !== -1) categories[idx] = newName;
 
-      scores[newName] = scores[oldName];
-      delete scores[oldName];
+    scores[newName] = scores[oldName];
+    delete scores[oldName];
 
-      if (pastScores[oldName] !== undefined) {
-        pastScores[newName] = pastScores[oldName];
-        delete pastScores[oldName];
-      }
-
-      save();
-      render();
+    if (pastScores[oldName] !== undefined) {
+      pastScores[newName] = pastScores[oldName];
+      delete pastScores[oldName];
     }
+
+    if (statusPoints?.[oldName] !== undefined) {
+      statusPoints[newName] = statusPoints[oldName];
+      delete statusPoints[oldName];
+    }
+
+    if (weeklyMissions?.[oldName] !== undefined) {
+      weeklyMissions[newName] = weeklyMissions[oldName];
+      delete weeklyMissions[oldName];
+    }
+
+    save();
+    render(); // ← ラベルに戻す
+  };
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") confirmEdit();
+    if (e.key === "Escape") render(); // キャンセル
   });
 
-  // ラベルを input に置き換え
+  input.addEventListener("blur", confirmEdit); // ← これが重要！
+
   labelElement.replaceWith(input);
   input.focus();
 }
