@@ -195,6 +195,20 @@ function render() {
     div.append(label, buttonGroup);
     list.appendChild(div);
   }
+  const missionInput = document.createElement("input");
+  missionInput.type = "text";
+  missionInput.placeholder = "ウィークリーミッションを入力";
+  missionInput.value = weeklyMissions[cat]?.target || "";
+  missionInput.style.marginLeft = "10px";
+  missionInput.style.width = "200px";
+
+  missionInput.addEventListener("change", (e) => {
+    weeklyMissions[cat].target = e.target.value;
+    save();
+  });
+
+div.append(missionInput);
+
 
   updateChart();
 }
@@ -306,21 +320,7 @@ function renderStatus() {
 
   for (let cat of categories) {
     const div = document.createElement("div");
-
-    const missionInput = document.createElement("input");
-    missionInput.type = "text";
-    missionInput.placeholder = "ウィークリーミッションを入力";
-    missionInput.value = weeklyMissions[cat]?.target || "";
-    missionInput.style.marginLeft = "10px";
-    missionInput.style.width = "200px";
-
-    missionInput.addEventListener("change", (e) => {
-      weeklyMissions[cat].target = e.target.value;
-      save();
-    });
-
-    div.append(missionInput);
-    
+    div.innerHTML = `${cat}: ${statusVal} pt`;  
     statusArea.appendChild(div);
   }
 }
