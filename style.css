@@ -66,7 +66,7 @@ button {
 /* カテゴリ名 */
 .score-row > span:first-child {
   flex: 0 0 auto;
-  min-width: 60px;
+  min-width: 300px;
   white-space: nowrap;
 }
 
@@ -85,7 +85,7 @@ button {
 
 /* ミッション入力欄 */
 .score-row .mission-input {
-  min-width: 100px;
+  min-width: 500px;
   padding: 4px 6px;
   font-size: 14px;
 }
