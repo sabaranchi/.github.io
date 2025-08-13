@@ -53,52 +53,47 @@ button {
   gap: 8px;
 }
 
-.category-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap; /* 必要なら折り返す */
-}
-
-.category-row button {
-  margin: 0 5px;
-}
-
+/* スコア行全体をフレックスで横並び */
 .score-row {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap; /* 必要なら折り返す */
-  gap: 4px;
+  align-items: center;  /* 高さを中央揃え */
+  flex-wrap: wrap;      /* 画面幅が狭い場合は折り返す */
+  gap: 8px;             /* 要素間のスペース */
+  margin-bottom: 8px;   /* 行間の余白 */
 }
 
-/* カテゴリ名とスコア */
-.score-row > span {
-  display: inline-block;
-}
-
-/* スコアのラベル */
-.score-row span:first-child {
-  flex: 1 1 auto;
-  min-width: 80px;
+/* ラベルとスコアボタン */
+.score-row > span:first-child {
+  flex: 1 1 30%;  /* 幅の目安30%で縮小・拡大可 */
+  min-width: 80px; 
   cursor: pointer;
 }
 
-.score-buttons {
+/* スコア操作ボタン */
+.score-row .score-buttons {
   display: flex;
   gap: 4px;
-  flex: 0 0 auto;
+  flex: 0 0 auto; /* ボタンサイズ固定 */
 }
 
-.mission-label {
-  flex: 2 1 auto;
-  min-width: 60px;
-  cursor: pointer;
-  white-space: nowrap; /* 無理に改行しない */
+/* ミッションラベルとチェックボックスを横並び */
+.score-row .mission-label,
+.score-row .mission-check {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0;
+  padding: 0;
 }
 
-.mission-check {
+/* ミッションラベルとチェックの間隔を最小化 */
+.score-row .mission-label {
+  margin-right: 4px;
+  white-space: nowrap; /* 長い文字も横並びを保つ */
+}
+
+/* チェックボックスの固定サイズ */
+.score-row .mission-check {
   flex: 0 0 auto;
-  transform: scale(1.2);
 }
 
 /* スマホ（480px以下） */
