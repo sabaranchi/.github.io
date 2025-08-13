@@ -91,7 +91,7 @@ button {
 
 .mission-label {
   flex: 2 1 auto;
-  min-width: 120px;
+  min-width: 60px;
   cursor: pointer;
   white-space: nowrap; /* 無理に改行しない */
 }

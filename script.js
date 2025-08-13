@@ -192,6 +192,13 @@ function render() {
     buttonGroup.className = "score-buttons";
     buttonGroup.append(minus, plus);
 
+    // ミッションラベル＋チェックボックスをまとめる
+    const missionWrapper = document.createElement("div");
+    missionWrapper.style.display = "flex";
+    missionWrapper.style.alignItems = "center";
+    missionWrapper.style.gap = "4px"; // ラベルとチェックの間隔
+    missionWrapper.style.flex = "2 1 auto";
+
     // ミッション入力欄
     if (!weeklyMissions[cat]) {
       weeklyMissions[cat] = { target: "", cleared: null };
@@ -227,8 +234,11 @@ function render() {
       save();
     });
 
+    // ラッパーに追加
+    missionWrapper.append(missionLabel, missionCheck);
+
     // 要素追加
-    div.append(label, buttonGroup, missionLabel, missionCheck);
+    div.append(label, buttonGroup, missionWrapper);
     list.appendChild(div);
   }
 
