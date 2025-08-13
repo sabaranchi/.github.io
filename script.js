@@ -5,7 +5,6 @@ let weeklyMissions = JSON.parse(localStorage.getItem("weeklyMissions")) || {}; /
 let pastScores = JSON.parse(localStorage.getItem("pastScores")) || {};
 let lastWeek = localStorage.getItem("lastUpdatedWeek");
 let playerLevel = parseInt(localStorage.getItem("playerLevel") || "0");
-let freePoints = parseInt(localStorage.getItem("freePoints") || "0");
 
 function getCurrentWeek() {
   const now = new Date();
@@ -31,9 +30,7 @@ function save() {
   localStorage.setItem("statusPoints", JSON.stringify(statusPoints));
   localStorage.setItem("weeklyMissions", JSON.stringify(weeklyMissions));
   localStorage.setItem("playerLevel", playerLevel);
-  localStorage.setItem("freePoints", freePoints);
 }
-
 
 function addCategory() {
   const input = document.getElementById("categoryInput");
@@ -43,6 +40,9 @@ function addCategory() {
 
   categories.push(name);
   scores[name] = 0;
+  statusPoints[name] = 0; // ステータス初期化
+  weeklyMissions[name] = { target: "", cleared: null, lastCheckWeek: getCurrentWeek() }; // ミッション初期化
+
   input.value = "";
   save();
   render();
@@ -58,12 +58,6 @@ function deleteCategories() {
     delete statusPoints[t];
     delete weeklyMissions[t];
   }
-  save();
-  render();
-}
-
-function sortCategories() {
-  categories.sort();
   save();
   render();
 }
@@ -141,18 +135,6 @@ function render() {
     div.className = "category-row";
     div.draggable = true;
     div.dataset.cat = cat; // 識別用
-
-    const missionInput = document.createElement("input");
-    missionInput.type = "text";
-    missionInput.placeholder = "ウィークリーミッションを入力";
-    missionInput.value = weeklyMissions[cat]?.target || "";
-    missionInput.style.marginLeft = "10px";
-    missionInput.style.width = "200px";
-
-    missionInput.addEventListener("change", (e) => {
-      weeklyMissions[cat].target = e.target.value;
-      save();
-    });
 
     div.append(missionInput);
 
@@ -256,17 +238,10 @@ function checkLevelUp() {
   const minScore = Math.min(...categories.map(cat => scores[cat] || 0));
   if (minScore > level) {
     // レベルアップ
-    const gained = (minScore - level) * 2; // 1レベルごとに2ポイント付与
-    freePoints += gained;
     level = minScore;
-    alert(`レベルが${level}になった！自由ポイントを${gained}pt獲得！`);
+    alert(`レベルが${level}になった！`);
     saveGameStats();
   }
-}
-
-function saveGameStats() {
-  localStorage.setItem("level", level);
-  localStorage.setItem("freePoints", freePoints);
 }
 
 function setWeeklyMission(cat) {
@@ -314,51 +289,34 @@ function recalcLevel() {
   const minScore = Math.min(...categories.map(c => scores[c] || 0));
   if (minScore > playerLevel) {
     // レベルアップ
-    const diff = minScore - playerLevel;
-    freePoints += diff; // レベル差分だけ自由ポイント付与
     playerLevel = minScore;
-    alert(`レベル${playerLevel}にアップ！ 自由ポイント+${diff}`);
-  } else if (minScore < playerLevel) {
-    // ペナルティ（例：自由ポイント減らす）
-    const diff = playerLevel - minScore;
-    freePoints = Math.max(0, freePoints - diff);
-    playerLevel = minScore;
-    alert(`レベルが${playerLevel}に下がりました… 自由ポイント-${diff}`);
-  }
+    alert(`レベル${playerLevel}にアップ！`);
+  } 
   save();
-}
-
-function addCategory() {
-  const input = document.getElementById("categoryInput");
-  const name = input.value.trim();
-  if (!name) return alert("カテゴリ名を入力してください");
-  if (categories.includes(name)) return alert("すでに存在します");
-
-  categories.push(name);
-  scores[name] = 0;
-  statusPoints[name] = 0; // ステータス初期化
-  weeklyMissions[name] = { target: "", cleared: null, lastCheckWeek: getCurrentWeek() }; // ミッション初期化
-
-  input.value = "";
-  save();
-  render();
 }
 
 function renderStatus() {
   const statusArea = document.getElementById("statusList");
-  statusArea.innerHTML = `
-    <div>レベル: ${playerLevel}</div>
-    <div>自由ポイント: ${freePoints}</div>
-  `;
+  statusArea.innerHTML = <div>レベル: ${playerLevel}</div>;
 
   for (let cat of categories) {
     const div = document.createElement("div");
     const statusVal = statusPoints[cat] || 0;
-    const mission = weeklyMissions[cat] || { target: 0, progress: 0 };
+    const missionInput = document.createElement("input");
+    missionInput.type = "text";
+    missionInput.placeholder = "ウィークリーミッションを入力";
+    missionInput.value = weeklyMissions[cat]?.target || "";
+    missionInput.style.marginLeft = "10px";
+    missionInput.style.width = "200px";
+
+    missionInput.addEventListener("change", (e) => {
+      weeklyMissions[cat].target = e.target.value;
+      save();
+    });
 
     div.innerHTML = `
       ${cat}: ${statusVal} pt
-      <br>ミッション: ${mission.progress}/${mission.target}
+      <br>ミッション: ${mission.input}
       <button onclick="setWeeklyMission('${cat}')">ミッション設定</button>
     `;
     statusArea.appendChild(div);
