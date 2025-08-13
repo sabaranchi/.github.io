@@ -104,6 +104,21 @@ function renameCategory(oldName) {
     delete pastScores[oldName];
   }
 
+  newName.onclick = () => {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = weeklyMissions[cat].target || "";
+    input.className = "mission-label";
+    input.style.width = "100px";
+    input.onblur = () => {
+      weeklyMissions[cat] = weeklyMissions[cat] || {};
+      weeklyMissions[cat].target = input.value;
+      save();
+      render(); // 再描画でラベルに戻す
+    };
+    newName.replaceWith(input);
+    input.focus();
+  };
   save();
   render();
 }
@@ -456,5 +471,3 @@ function updateChart() {
 
 render();
 
-
-//レベルアップはすべてのカテゴリのポイントの中で最低なものに合わせる、レベルアップ時には自由に割り振れるステータスポイントを付与、
