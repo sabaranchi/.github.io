@@ -315,10 +315,7 @@ function addCategory() {
 
 function renderStatus() {
   const statusArea = document.getElementById("statusList");
-  statusArea.innerHTML = `
-    <div>レベル: ${playerLevel}</div>
-    <div>自由ポイント: ${freePoints}</div>
-  `;
+  statusArea.innerHTML = `<div>レベル: ${playerLevel}</div> `;
 
   for (let cat of categories) {
     const div = document.createElement("div");
