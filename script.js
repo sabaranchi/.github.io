@@ -287,7 +287,6 @@ function renderStatus() {
   for (const [key, val] of Object.entries(status)) {
     const div = document.createElement("div");
     div.textContent = `${key}: ${val}`;
-    statusArea.innerHTML += `<div>${cat}: ${scores[cat] || 0}</div>`;
     if (freePoints > 0) {
       const plusBtn = document.createElement("button");
       plusBtn.textContent = "+";
