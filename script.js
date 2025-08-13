@@ -2,6 +2,8 @@ let categories = JSON.parse(localStorage.getItem("categories")) || [];
 let scores = JSON.parse(localStorage.getItem("scores")) || {};
 let pastScores = JSON.parse(localStorage.getItem("pastScores")) || {};
 let lastWeek = localStorage.getItem("lastUpdatedWeek");
+let playerLevel = parseInt(localStorage.getItem("playerLevel") || "0");
+let freePoints = parseInt(localStorage.getItem("freePoints") || "0");
 
 function getCurrentWeek() {
   const now = new Date();
@@ -24,6 +26,8 @@ checkWeekRollover();
 function save() {
   localStorage.setItem("categories", JSON.stringify(categories));
   localStorage.setItem("scores", JSON.stringify(scores));
+  localStorage.setItem("playerLevel", playerLevel);
+  localStorage.setItem("freePoints", freePoints);
 }
 
 function addCategory() {
@@ -57,6 +61,7 @@ function sortCategories() {
 
 function updateScore(cat, delta) {
   scores[cat] = Math.max(0, (scores[cat] || 0) + delta);
+  recalcLevel();
   save();
   render();
 }
@@ -207,9 +212,6 @@ function calculateStatus() {
   return status;
 }
 
-let level = parseInt(localStorage.getItem("level")) || 1;
-let freePoints = parseInt(localStorage.getItem("freePoints")) || 0;
-
 function checkLevelUp() {
   const minScore = Math.min(...categories.map(cat => scores[cat] || 0));
   if (minScore > level) {
@@ -249,27 +251,43 @@ function checkWeekRollover() {
   localStorage.setItem("lastUpdatedWeek", currentWeek.toString());
 }
 
+function recalcLevel() {
+  if (categories.length === 0) return;
+
+  const minScore = Math.min(...categories.map(c => scores[c] || 0));
+  if (minScore > playerLevel) {
+    // レベルアップ
+    const diff = minScore - playerLevel;
+    freePoints += diff; // レベル差分だけ自由ポイント付与
+    playerLevel = minScore;
+    alert(`レベル${playerLevel}にアップ！ 自由ポイント+${diff}`);
+  } else if (minScore < playerLevel) {
+    // ペナルティ（例：自由ポイント減らす）
+    const diff = playerLevel - minScore;
+    freePoints = Math.max(0, freePoints - diff);
+    playerLevel = minScore;
+    alert(`レベルが${playerLevel}に下がりました… 自由ポイント-${diff}`);
+  }
+  save();
+}
+
 function renderStatus() {
   const statusArea = document.getElementById("statusList");
   const status = calculateStatus();
-  statusArea.innerHTML = `レベル: ${level} / 自由ポイント: ${freePoints}<br>`;
+  statusArea.innerHTML = `
+    <div>レベル: ${playerLevel}</div>
+    <div>自由ポイント: ${freePoints}</div>
+  `;
 
   if (categories.length === 0) {
     statusArea.textContent = "カテゴリがありません。記録画面で追加してください。";
     return;
   }
 
-  const levelDiv = document.createElement("div");
-  levelDiv.textContent = `レベル: ${level}`;
-  statusArea.appendChild(levelDiv);
-
-  const freeDiv = document.createElement("div");
-  freeDiv.textContent = `自由ポイント: ${freePoints}`;
-  statusArea.appendChild(freeDiv);
-
   for (const [key, val] of Object.entries(status)) {
     const div = document.createElement("div");
     div.textContent = `${key}: ${val}`;
+    statusArea.innerHTML += `<div>${cat}: ${scores[cat] || 0}</div>`;
     if (freePoints > 0) {
       const plusBtn = document.createElement("button");
       plusBtn.textContent = "+";
