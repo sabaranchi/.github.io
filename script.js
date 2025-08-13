@@ -408,7 +408,7 @@ function renderStatus() {
   const status = calculateStatus();
   statusArea.innerHTML = `<div>レベル: ${playerLevel}</div>`;
 
-  for (const stat of statNames) {
+  for (const stat of statusNames) {
     const div = document.createElement("div");
     div.textContent = `${stat}: ${status[stat]} pt`;
     statusArea.appendChild(div);
