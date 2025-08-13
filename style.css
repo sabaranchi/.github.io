@@ -101,14 +101,14 @@ button {
     overflow-x: visible;           /* 横スクロール不要に */
   }
 
-  /* 1行目：左（カテゴリ名＋ポイント） */
+  /* 1行目：カテゴリ名＋ポイント（左） */
   .score-row > span:first-child {
     grid-column: 1;
     grid-row: 1;
-    min-width: 300;                  /* 省スペース化 */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    min-width: unset;          /* 固定幅を解除 */
+    max-width: 100%;           /* 行全体を使えるようにする */
+    overflow: visible;         /* 省略しない */
+    white-space: nowrap;       /* 横並び維持 */
   }
 
   /* 1行目：右（±ボタン） */
@@ -118,14 +118,15 @@ button {
     justify-self: end;             /* 右寄せ */
   }
 
-  /* 2行目：左（ミッション表示/入力）*/
+  /* 2行目：ミッション（左） */
   .score-row .mission-label,
   .score-row .mission-input {
     grid-column: 1;
     grid-row: 2;
-    min-width: 300;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    min-width: unset;          /* 固定幅解除 */
+    max-width: 100%;
+    overflow: visible;         /* 省略しない */
+    white-space: nowrap;
   }
 
   /* 2行目：右（チェックボックス） */
