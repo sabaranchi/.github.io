@@ -47,34 +47,6 @@ function save() {
   localStorage.setItem("playerLevel", playerLevel);
 }
 
-const categoryLabel = document.createElement("span");
-categoryLabel.textContent = cat;
-categoryLabel.className = "category-name";
-categoryLabel.style.cursor = "pointer";
-
-categoryLabel.onclick = () => {
-  const input = document.createElement("input");
-  input.type = "text";
-  input.value = cat;
-  input.className = "category-name";
-  input.style.width = "100px";
-
-  input.onblur = () => {
-    const newName = input.value.trim();
-    if (!newName || newName === cat) return render();
-    if (categories.includes(newName)) return alert("すでに存在しています");
-
-    renameCategoryDirect(cat, newName); // ← ここでリネーム処理
-  };
-
-  input.onkeydown = (e) => {
-    if (e.key === "Enter") input.blur();
-    if (e.key === "Escape") render();
-  };
-
-  categoryLabel.replaceWith(input);
-  input.focus();
-};
 
 function addCategory() {
   const input = document.getElementById("categoryInput");
@@ -135,7 +107,6 @@ function renameCategory(oldName) {
   save();
   render();
 }
-
 
 
 function enableEdit(labelElement, oldName) {
