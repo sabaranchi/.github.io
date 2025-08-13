@@ -15,7 +15,7 @@ let lastWeek = localStorage.getItem("lastUpdatedWeek");
 let playerLevel = parseInt(localStorage.getItem("playerLevel") || "0");
 // RPGステータス名リスト
 const statusNames = ["ATK", "DEF", "HP", "MP", "SPD"];
-// カテゴリとステータスを紐付け
+// カテゴリとステータスを紐付け{カテゴリ名: ステータス名}
 let categoryToStatus = JSON.parse(localStorage.getItem("categoryToStatus")) || {};
 
 function getCurrentWeek() {
@@ -232,22 +232,6 @@ function render() {
       save();
     });
 
-    // カテゴリ横にステータス選択
-    const statusSelect = document.createElement("select");
-    for (let s of statusNames) {
-      const option = document.createElement("option");
-      option.value = s;
-      option.textContent = s;
-      if (categoryToStatus[cat] === s) option.selected = true;
-      statusSelect.appendChild(option);
-    }
-    statusSelect.onchange = (e) => {
-      categoryToStatus[cat] = e.target.value;
-      localStorage.setItem("categoryToStatus", JSON.stringify(categoryToStatus));
-    };
-    div.appendChild(statusSelect);
-
-
     // 要素追加
     div.append(label, buttonGroup, missionLabel, missionCheck);
     list.appendChild(div);
@@ -286,13 +270,11 @@ function goToRecord() {
 }
 
 // カテゴリのポイントをもとにステータスを計算
-function calculateStatus() {
+function calculateStatus(cat) {
   // カテゴリ名ごとにステータス名を変えたり、合算や係数かけるのも可能
-  //const statusPoints = {};
-  //for (let cat of categories) {
-    // 例えばカテゴリ名が「体力」ならポイントを体力ステータスに
-    //statusPoints[cat] = scores[cat] || 0;
-  //}
+  for (let cat of categories) {
+    statusPoints[cat] = scores[cat] || 0;
+  }
   return statusPoints;
 }
 
@@ -333,19 +315,29 @@ function checkWeekRollover() {
   localStorage.setItem("lastUpdatedWeek", lastWeek);
 }
 
-
-
+//レベル計算
 function recalcLevel() {
   if (categories.length === 0) return;
 
-  const minScore = Math.min(...categories.map(c => scores[c] || 0));
+  // 割り当て済みカテゴリだけを使う
+  const relevantScores = categories
+    .filter(cat => categoryToStatus[cat])
+    .map(cat => scores[cat] || 0);
+
+  if (relevantScores.length === 0) return;
+
+  const minScore = Math.min(...relevantScores);
+
   if (minScore > playerLevel) {
-    // レベルアップ
     playerLevel = minScore;
     alert(`レベル${playerLevel}にアップ！`);
-  } 
+  } else if (minScore < playerLevel) {
+    playerLevel = minScore;
+    alert(`レベルが${playerLevel}に下がりました…`);
+  }
   save();
 }
+
 
 function renderStatus() {
   const statusArea = document.getElementById("statusList");
@@ -353,10 +345,45 @@ function renderStatus() {
 
   for (let cat of categories) {
     const div = document.createElement("div");
-    div.innerHTML = `${cat}: ${statusPoints[cat] || 0} pt`;
+    div.innerHTML = `${cat}: ${calculateStatus(cat) || 0} pt`;
     statusArea.appendChild(div);
   }
 }
+
+//カテゴリ割り当て機能
+document.getElementById("assignCategoryBtn").onclick = () => {
+  const area = document.getElementById("assignCategoryArea");
+  area.innerHTML = "";
+  area.style.display = "block";
+
+  for (let cat of categories) {
+    const div = document.createElement("div");
+    div.style.marginBottom = "5px";
+
+    const label = document.createElement("span");
+    label.textContent = cat + ": ";
+    div.appendChild(label);
+
+    const select = document.createElement("select");
+    for (let s of statusNames) {
+      const option = document.createElement("option");
+      option.value = s;
+      option.textContent = s;
+      if (categoryToStatus[cat] === s) option.selected = true;
+      select.appendChild(option);
+    }
+
+    select.onchange = (e) => {
+      categoryToStatus[cat] = e.target.value;
+      localStorage.setItem("categoryToStatus", JSON.stringify(categoryToStatus));
+      recalcLevel(); // 割り当て変わったらレベル再計算
+      renderStatus();
+    };
+
+    div.appendChild(select);
+    area.appendChild(div);
+  }
+};
 
 
 let chart;
