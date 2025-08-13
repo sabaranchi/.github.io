@@ -196,16 +196,31 @@ function render() {
     if (!weeklyMissions[cat]) {
       weeklyMissions[cat] = { target: "", cleared: null };
     }
-    const missionInput = document.createElement("input");
-    missionInput.type = "text";
-    missionInput.placeholder = "ウィークリーミッション";
-    missionInput.value = weeklyMissions[cat].target || "";
-    missionInput.style.marginLeft = "10px";
-    missionInput.style.width = "150px";
-    missionInput.addEventListener("change", (e) => {
-      weeklyMissions[cat].target = e.target.value;
-      save();
-    });
+    // ミッション表示ラベル
+    const missionLabel = document.createElement("span");
+    missionLabel.textContent = `🎯 ${weeklyMissions[cat].target || "ミッション未設定"}`;
+    missionLabel.style.marginLeft = "10px";
+    missionLabel.style.cursor = "pointer";
+    missionLabel.style.width = "150px";
+    missionLabel.title = "クリックして編集";
+
+    missionLabel.onclick = () => {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = weeklyMissions[cat].target || "";
+      input.style.width = "150px";
+      input.onblur = () => {
+        weeklyMissions[cat].target = input.value.trim();
+        save();
+        render(); // 再描画でラベルに戻す
+      };
+      input.onkeydown = (e) => {
+        if (e.key === "Enter") input.blur();
+      };
+      missionLabel.replaceWith(input);
+      input.focus();
+    };
+
 
     // クリアチェックボックス
     const missionCheck = document.createElement("input");
