@@ -53,7 +53,7 @@ button {
   gap: 8px;
 }
 
-
+/* PC/タブレット（従来どおりフレックス横並び） */
 .score-row {
   display: flex;
   align-items: center;
@@ -61,33 +61,27 @@ button {
   gap: 8px;
   margin-bottom: 12px;
   width: 100%;
+  overflow-x: auto;
 }
 
-/* カテゴリ名 */
+/* カテゴリ名（左） */
 .score-row > span:first-child {
   flex: 0 0 auto;
-  min-width: 300px;
+  min-width: 60px;
   white-space: nowrap;
 }
 
-/* スコアボタン */
+/* ±ボタン */
 .score-row .score-buttons {
   display: flex;
   gap: 4px;
   flex: 0 0 auto;
 }
 
-/* ミッションラベル */
-.score-row .mission-label {
-  white-space: nowrap;
-  margin-right: 4px;
-}
-
-/* ミッション入力欄 */
+/* ミッション表示/入力 */
+.score-row .mission-label,
 .score-row .mission-input {
-  min-width: 500px;
-  padding: 4px 6px;
-  font-size: 14px;
+  white-space: nowrap;
 }
 
 /* チェックボックス */
@@ -96,40 +90,49 @@ button {
   height: 20px;
 }
 
-/* --- スマホ用 2段レイアウト固定 --- */
+/* --- スマホ用（2段のグリッドに切替） --- */
 @media (max-width: 600px) {
   .score-row {
-    flex-wrap: wrap;
+    display: grid;                 /* ← Gridに切替 */
+    grid-template-columns: 1fr auto; /* 左＝可変、右＝最小幅 */
+    grid-template-rows: auto auto; /* 2行 */
+    column-gap: 8px;
+    row-gap: 6px;
+    overflow-x: visible;           /* 横スクロール不要に */
   }
 
-  /* 上段: カテゴリ名 + ポイント + ±ボタン */
-  .score-row > span:first-child,
+  /* 1行目：左（カテゴリ名＋ポイント） */
+  .score-row > span:first-child {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;                  /* 省スペース化 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 1行目：右（±ボタン） */
   .score-row .score-buttons {
-    order: 1;
-    flex: 0 0 auto;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;             /* 右寄せ */
   }
 
-  /* 下段: ミッション欄 + チェックボックス */
+  /* 2行目：左（ミッション表示/入力）*/
   .score-row .mission-label,
-  .score-row .mission-input,
-  .score-row .mission-check {
-    order: 2;
-    flex: 0 0 auto;
+  .score-row .mission-input {
+    grid-column: 1;
+    grid-row: 2;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  /* 上段グループ全体を1行に収める */
-  .score-row > span:first-child,
-  .score-row .score-buttons {
-    margin-bottom: 4px;
-  }
-
-  /* 下段は横並びで1行 */
-  .score-row .mission-label,
-  .score-row .mission-input,
+  /* 2行目：右（チェックボックス） */
   .score-row .mission-check {
-    display: inline-flex;
-    align-items: center;
-    margin-right: 4px;
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;           /* ミッションの右にぴったり */
+    align-self: center;
   }
 }
-
