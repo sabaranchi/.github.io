@@ -167,8 +167,7 @@ function render() {
       }
     });
 
-    div.className = "score-row";
-    div.className = "score-row"; // ← ここでflexレイアウトを適用
+    div.className = "score-row"; // flexレイアウト適用
 
     const label = document.createElement("span");
     label.textContent = `${cat}: ${scores[cat] || 0} pt`;
@@ -186,29 +185,26 @@ function render() {
     plus.className = "zoom-safe-button";
     plus.onclick = () => updateScore(cat, 1);
 
-    // ボタンをまとめるコンテナ
     const buttonGroup = document.createElement("div");
     buttonGroup.className = "score-buttons";
     buttonGroup.append(minus, plus);
 
-    // 全体に追加
-    div.append(label, buttonGroup);
+    // ▼ ミッション入力欄をここで追加
+    const missionInput = document.createElement("input");
+    missionInput.type = "text";
+    missionInput.placeholder = "ウィークリーミッションを入力";
+    missionInput.value = weeklyMissions[cat]?.target || "";
+    missionInput.style.marginLeft = "10px";
+    missionInput.style.width = "200px";
+
+    missionInput.addEventListener("change", (e) => {
+      weeklyMissions[cat].target = e.target.value;
+      save();
+    });
+
+    div.append(label, buttonGroup, missionInput);
     list.appendChild(div);
   }
-  const missionInput = document.createElement("input");
-  missionInput.type = "text";
-  missionInput.placeholder = "ウィークリーミッションを入力";
-  missionInput.value = weeklyMissions[cat]?.target || "";
-  missionInput.style.marginLeft = "10px";
-  missionInput.style.width = "200px";
-
-  missionInput.addEventListener("change", (e) => {
-    weeklyMissions[cat].target = e.target.value;
-    save();
-  });
-
-div.append(missionInput);
-
 
   updateChart();
 }
@@ -316,11 +312,11 @@ function recalcLevel() {
 
 function renderStatus() {
   const statusArea = document.getElementById("statusList");
-  statusArea.innerHTML = `<div>レベル: ${playerLevel}</div> `;
+  statusArea.innerHTML = `<div>レベル: ${playerLevel}</div>`;
 
   for (let cat of categories) {
     const div = document.createElement("div");
-    div.innerHTML = `${cat}: ${statusPoints} pt`;  
+    div.innerHTML = `${cat}: ${statusPoints[cat] || 0} pt`;
     statusArea.appendChild(div);
   }
 }
