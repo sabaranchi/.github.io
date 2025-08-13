@@ -43,6 +43,9 @@ function addCategory() {
 
   categories.push(name);
   scores[name] = 0;
+  statusPoints[name] = 0; // ステータス初期化
+  weeklyMissions[name] = { target: "", cleared: null, lastCheckWeek: getCurrentWeek() }; // ミッション初期化
+
   input.value = "";
   save();
   render();
@@ -313,29 +316,9 @@ function recalcLevel() {
   save();
 }
 
-function addCategory() {
-  const input = document.getElementById("categoryInput");
-  const name = input.value.trim();
-  if (!name) return alert("カテゴリ名を入力してください");
-  if (categories.includes(name)) return alert("すでに存在します");
-
-  categories.push(name);
-  scores[name] = 0;
-  statusPoints[name] = 0; // ステータス初期化
-  weeklyMissions[name] = { target: "", cleared: null, lastCheckWeek: getCurrentWeek() }; // ミッション初期化
-
-  input.value = "";
-  save();
-  render();
-}
-
 function renderStatus() {
   const statusArea = document.getElementById("statusList");
-  statusArea.innerHTML = `
-    <div>レベル: ${playerLevel}</div>
-    <div>自由ポイント: ${freePoints}</div>
-  `;
-
+  statusArea.innerHTML = <div>レベル: ${playerLevel}</div>
   for (let cat of categories) {
     const div = document.createElement("div");
     const statusVal = statusPoints[cat] || 0;
