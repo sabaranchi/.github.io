@@ -105,7 +105,7 @@ button {
   .score-row > span:first-child {
     grid-column: 1;
     grid-row: 1;
-    min-width: 0;                  /* 省スペース化 */
+    min-width: 300;                  /* 省スペース化 */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -123,7 +123,7 @@ button {
   .score-row .mission-input {
     grid-column: 1;
     grid-row: 2;
-    min-width: 0;
+    min-width: 300;
     overflow: hidden;
     text-overflow: ellipsis;
   }
