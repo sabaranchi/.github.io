@@ -200,14 +200,11 @@ function render() {
     const missionLabel = document.createElement("span");
     missionLabel.textContent = `${weeklyMissions[cat].target || "ミッション未設定"}`;
     missionLabel.className = "mission-label";
-    missionLabel.style.cursor = "pointer";
-    missionLabel.title = "クリックして編集";
-
     missionLabel.onclick = () => {
       const input = document.createElement("input");
       input.type = "text";
       input.value = weeklyMissions[cat].target || "";
-      input.style.width = "150px";
+      input.className = "mission-label";
       input.onblur = () => {
         weeklyMissions[cat].target = input.value.trim();
         save();

@@ -57,6 +57,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap; /* 必要なら折り返す */
 }
 
 .category-row button {
@@ -67,48 +68,46 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 8px;
+  flex-wrap: wrap; /* 必要なら折り返す */
+  gap: 4px;
 }
 
 .score-label {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 80px;
   cursor: pointer;
 }
 
 .score-buttons {
   display: flex;
-  gap: 6px;
+  gap: 4px;
+  flex: 0 0 auto;
 }
 
-/* スマホ対応（768px以下） */
-@media (max-width: 768px) {
+.mission-label {
+  flex: 2 1 auto;
+  min-width: 100px;
+}
+
+.mission-check {
+  flex: 0 0 auto;
+}
+
+/* スマホ（480px以下） */
+@media (max-width: 480px) {
   .score-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
+    gap: 2px;
   }
 
-  .score-label {
-    width: 100% !important;
+  input[type="text"].mission-label {
+    font-size: 14px;
   }
 
-  .score-buttons {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .mission-label {
-    width: 100% !important;
-    margin-left: 0 !important;
-  }
-
-  .mission-check {
-    margin-left: 0 !important;
-  }
-
-  input[type="text"] {
-    width: 100% !important;
-    box-sizing: border-box;
+  button {
+    font-size: 14px;
+    padding: 4px 8px;
   }
 }
+
+
 
