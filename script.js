@@ -306,8 +306,6 @@ function renderStatus() {
 
   for (let cat of categories) {
     const div = document.createElement("div");
-    const statusVal = statusPoints[cat] || 0;
-    const mission = weeklyMissions[cat] || { target: 0, progress: 0 };
 
     const missionInput = document.createElement("input");
     missionInput.type = "text";
@@ -323,10 +321,6 @@ function renderStatus() {
 
     div.append(missionInput);
     
-    div.innerHTML = `
-      ${cat}: ${statusVal} pt
-      <br><button onclick="setWeeklyMission('${cat}')">ミッション設定</button>
-    `;
     statusArea.appendChild(div);
   }
 }
