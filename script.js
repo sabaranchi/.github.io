@@ -5,7 +5,6 @@ let weeklyMissions = JSON.parse(localStorage.getItem("weeklyMissions")) || {}; /
 let pastScores = JSON.parse(localStorage.getItem("pastScores")) || {};
 let lastWeek = localStorage.getItem("lastUpdatedWeek");
 let playerLevel = parseInt(localStorage.getItem("playerLevel") || "0");
-let freePoints = parseInt(localStorage.getItem("freePoints") || "0");
 
 function getCurrentWeek() {
   const now = new Date();
@@ -31,7 +30,6 @@ function save() {
   localStorage.setItem("statusPoints", JSON.stringify(statusPoints));
   localStorage.setItem("weeklyMissions", JSON.stringify(weeklyMissions));
   localStorage.setItem("playerLevel", playerLevel);
-  localStorage.setItem("freePoints", freePoints);
 }
 
 
@@ -331,10 +329,7 @@ function addCategory() {
 
 function renderStatus() {
   const statusArea = document.getElementById("statusList");
-  statusArea.innerHTML = `
-    <div>レベル: ${playerLevel}</div>
-    <div>自由ポイント: ${freePoints}</div>
-  `;
+  statusArea.innerHTML = <div>レベル: ${playerLevel}</div>
 
   for (let cat of categories) {
     const div = document.createElement("div");
