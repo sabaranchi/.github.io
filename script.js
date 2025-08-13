@@ -1,7 +1,7 @@
 let categories = JSON.parse(localStorage.getItem("categories")) || [];
 let scores = JSON.parse(localStorage.getItem("scores")) || {};
-let statusPoints = {}; // ステータス用ポイント（別管理）
-let weeklyMissions = {}; // {カテゴリ: {target: 数値, progress: 数値, lastCheck: タイムスタンプ}}
+let statusPoints = JSON.parse(localStorage.getItem("statusPoints")) || {}; // ステータス用ポイント（別管理）
+let weeklyMissions = JSON.parse(localStorage.getItem("weeklyMissions")) || {}; // {カテゴリ: {target: 数値, progress: 数値, lastCheck: タイムスタンプ}}
 let pastScores = JSON.parse(localStorage.getItem("pastScores")) || {};
 let lastWeek = localStorage.getItem("lastUpdatedWeek");
 let playerLevel = parseInt(localStorage.getItem("playerLevel") || "0");
@@ -53,7 +53,11 @@ function deleteCategories() {
   if (!toDelete) return;
   const targets = toDelete.split(" ").map((s) => s.trim());
   categories = categories.filter((c) => !targets.includes(c));
-  for (let t of targets) delete scores[t];
+  for (let t of targets) {
+    delete scores[t];
+    delete statusPoints[t];
+    delete weeklyMissions[t];
+  }
   save();
   render();
 }
@@ -135,32 +139,46 @@ function render() {
   for (let cat of categories) {
     const div = document.createElement("div");
     div.className = "category-row";
-div.draggable = true;
-div.dataset.cat = cat; // 識別用
+    div.draggable = true;
+    div.dataset.cat = cat; // 識別用
 
-div.addEventListener("dragstart", (e) => {
-  e.dataTransfer.setData("text/plain", cat);
-});
+    const missionInput = document.createElement("input");
+    missionInput.type = "text";
+    missionInput.placeholder = "ウィークリーミッションを入力";
+    missionInput.value = weeklyMissions[cat]?.target || "";
+    missionInput.style.marginLeft = "10px";
+    missionInput.style.width = "200px";
 
-div.addEventListener("dragover", (e) => {
-  e.preventDefault(); // ドロップ許可
-});
+    missionInput.addEventListener("change", (e) => {
+      weeklyMissions[cat].target = e.target.value;
+      save();
+    });
 
-div.addEventListener("drop", (e) => {
-  e.preventDefault();
-  const draggedCat = e.dataTransfer.getData("text/plain");
-  const targetCat = e.currentTarget.dataset.cat;
+    div.append(missionInput);
 
-  const fromIndex = categories.indexOf(draggedCat);
-  const toIndex = categories.indexOf(targetCat);
+    div.addEventListener("dragstart", (e) => {
+      e.dataTransfer.setData("text/plain", cat);
+    });
 
-  if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
-    const moved = categories.splice(fromIndex, 1)[0];
-    categories.splice(toIndex, 0, moved);
-    save();
-    render();
-  }
-});
+    div.addEventListener("dragover", (e) => {
+      e.preventDefault(); // ドロップ許可
+    });
+
+    div.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const draggedCat = e.dataTransfer.getData("text/plain");
+      const targetCat = e.currentTarget.dataset.cat;
+
+      const fromIndex = categories.indexOf(draggedCat);
+      const toIndex = categories.indexOf(targetCat);
+
+      if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
+        const moved = categories.splice(fromIndex, 1)[0];
+        categories.splice(toIndex, 0, moved);
+        save();
+        render();
+      }
+    });
 
     div.className = "score-row";
     div.className = "score-row"; // ← ここでflexレイアウトを適用
@@ -194,9 +212,26 @@ div.addEventListener("drop", (e) => {
   updateChart();
 }
 
-function goToGame() {
+async function askMissionClearStatus() {
+  for (let cat of categories) {
+    const mission = weeklyMissions[cat];
+    if (!mission || !mission.target) continue;
+    if (mission.cleared !== null) continue; // すでに回答済み
+
+    const answer = prompt(`【${cat}】のミッション\n「${mission.target}」\nクリアしましたか？\n(はい: y / いいえ: n)`);
+    if (answer === null || answer.toLowerCase() !== 'y') {
+      mission.cleared = false;
+    } else {
+      mission.cleared = true;
+    }
+    save();
+  }
+}
+
+async function goToGame() {
   document.getElementById("recordArea").style.display = "none";
   document.getElementById("gameArea").style.display = "block";
+  await askMissionClearStatus();
   renderStatus();
 }
 
@@ -209,12 +244,12 @@ function goToRecord() {
 function calculateStatus() {
   // 例として、カテゴリポイントをそのままステータスに割り当てる
   // カテゴリ名ごとにステータス名を変えたり、合算や係数かけるのも可能
-  const status = {};
-  for (let cat of categories) {
+  //const statusPoints = {};
+  //for (let cat of categories) {
     // 例えばカテゴリ名が「体力」ならポイントを体力ステータスに
-    status[cat] = scores[cat] || 0;
-  }
-  return status;
+    //statusPoints[cat] = scores[cat] || 0;
+  //}
+  return statusPoints;
 }
 
 function checkLevelUp() {
@@ -254,15 +289,19 @@ function checkWeekRollover() {
     for (let cat of categories) {
       const mission = weeklyMissions[cat];
       if (!mission) continue;
-      if (mission.progress >= mission.target) {
+      // クリア情報がない、またはfalseならペナルティ
+      if (mission.cleared === true) {
         statusPoints[cat] = (statusPoints[cat] || 0) + 3;
       } else {
         statusPoints[cat] = Math.max(0, (statusPoints[cat] || 0) - 5);
       }
-      mission.progress = 0; // 進捗リセット
+      // ミッション状態をリセットし週番号更新
+      weeklyMissions[cat].cleared = null;
+      weeklyMissions[cat].lastCheckWeek = currentWeek;
     }
     alert("週が変わったのでミッション結果を反映しました！");
     save();
+    checkLevelUp();
   }
   lastWeek = currentWeek.toString();
   localStorage.setItem("lastUpdatedWeek", lastWeek);
@@ -298,7 +337,7 @@ function addCategory() {
   categories.push(name);
   scores[name] = 0;
   statusPoints[name] = 0; // ステータス初期化
-  weeklyMissions[name] = { target: 0, progress: 0 }; // ミッション初期化
+  weeklyMissions[name] = { target: "", cleared: null, lastCheckWeek: getCurrentWeek() }; // ミッション初期化
 
   input.value = "";
   save();
