@@ -252,7 +252,7 @@ function checkWeekRollover() {
 function renderStatus() {
   const statusArea = document.getElementById("statusList");
   const status = calculateStatus();
-  statusArea.innerHTML = "";
+  statusArea.innerHTML = `レベル: ${level} / 自由ポイント: ${freePoints}<br>`;
 
   if (categories.length === 0) {
     statusArea.textContent = "カテゴリがありません。記録画面で追加してください。";
@@ -270,22 +270,19 @@ function renderStatus() {
   for (const [key, val] of Object.entries(status)) {
     const div = document.createElement("div");
     div.textContent = `${key}: ${val}`;
-    statusArea.appendChild(div);
-
-    // 自由ポイント割り振りボタン
     if (freePoints > 0) {
-      const btn = document.createElement("button");
-      btn.textContent = "+";
-      btn.onclick = () => {
-        scores[key] += 1;
-        freePoints -= 1;
+      const plusBtn = document.createElement("button");
+      plusBtn.textContent = "+";
+      plusBtn.onclick = () => {
+        scores[key] = (scores[key] || 0) + 1;
+        freePoints--;
         save();
-        saveGameStats();
+        localStorage.setItem("freePoints", freePoints);
         renderStatus();
-        render();
       };
-      div.appendChild(btn);
+      div.appendChild(plusBtn);
     }
+    statusArea.appendChild(div);
   }
 }
 
