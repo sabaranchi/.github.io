@@ -67,8 +67,9 @@ button {
 /* カテゴリ名 */
 .score-row > span:first-child {
   flex: 0 0 auto;
-  min-width: 80px;
+  min-width: 60px;         /* 少し小さめに */
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* スコアボタン */
@@ -76,6 +77,7 @@ button {
   display: flex;
   gap: 4px;
   flex: 0 0 auto;
+  flex-shrink: 0;
 }
 
 /* ミッションラベル */
@@ -83,14 +85,16 @@ button {
   white-space: nowrap;
   margin-right: 4px;
   flex: 0 0 auto;
+  flex-shrink: 0;
 }
 
 /* ミッション入力欄 */
 .score-row .mission-input {
-  flex: 0 0 120px;
-  min-width: 100px;
-  padding: 4px 8px;
+  flex: 0 0 auto;
+  min-width: 80px;         /* 最小幅を少し縮小 */
+  padding: 4px 6px;
   font-size: 14px;
+  flex-shrink: 0;
 }
 
 /* チェックボックス */
@@ -98,6 +102,7 @@ button {
   flex: 0 0 auto;
   width: 20px;
   height: 20px;
+  flex-shrink: 0;
 }
 
 /* スマホでも横並びを維持 */
@@ -105,6 +110,10 @@ button {
   .score-row {
     flex-direction: row !important;
     flex-wrap: nowrap !important;
+    overflow-x: auto;        /* 横スクロール必須 */
+  }
+  .score-row > * {
+    flex-shrink: 0;          /* 縮ませない */
   }
 }
 
