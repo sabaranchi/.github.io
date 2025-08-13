@@ -2,6 +2,14 @@ let categories = JSON.parse(localStorage.getItem("categories")) || [];
 let scores = JSON.parse(localStorage.getItem("scores")) || {};
 let statusPoints = JSON.parse(localStorage.getItem("statusPoints")) || {}; // ステータス用ポイント（別管理）
 let weeklyMissions = JSON.parse(localStorage.getItem("weeklyMissions")) || {}; // {カテゴリ: {target: 数値, progress: 数値, lastCheck: タイムスタンプ}}
+if (!weeklyMissions) {
+  weeklyMissions = {};
+}
+categories.forEach(cat => {
+  if (!weeklyMissions[cat]) {
+    weeklyMissions[cat] = { target: "", cleared: null };
+  }
+});
 let pastScores = JSON.parse(localStorage.getItem("pastScores")) || {};
 let lastWeek = localStorage.getItem("lastUpdatedWeek");
 let playerLevel = parseInt(localStorage.getItem("playerLevel") || "0");
@@ -139,26 +147,21 @@ function render() {
 
   for (let cat of categories) {
     const div = document.createElement("div");
-    div.className = "category-row";
+    div.className = "score-row";
     div.draggable = true;
-    div.dataset.cat = cat; // 識別用
+    div.dataset.cat = cat;
 
+    // ドラッグイベント
     div.addEventListener("dragstart", (e) => {
       e.dataTransfer.setData("text/plain", cat);
     });
-
-    div.addEventListener("dragover", (e) => {
-      e.preventDefault(); // ドロップ許可
-    });
-
+    div.addEventListener("dragover", (e) => e.preventDefault());
     div.addEventListener("drop", (e) => {
       e.preventDefault();
       const draggedCat = e.dataTransfer.getData("text/plain");
       const targetCat = e.currentTarget.dataset.cat;
-
       const fromIndex = categories.indexOf(draggedCat);
       const toIndex = categories.indexOf(targetCat);
-
       if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
         const moved = categories.splice(fromIndex, 1)[0];
         categories.splice(toIndex, 0, moved);
@@ -167,14 +170,14 @@ function render() {
       }
     });
 
-    div.className = "score-row"; // flexレイアウト適用
-
+    // ラベル
     const label = document.createElement("span");
     label.textContent = `${cat}: ${scores[cat] || 0} pt`;
-    label.style.width = "50%";
+    label.style.width = "30%";
     label.style.cursor = "pointer";
     label.onclick = () => enableEdit(label, cat);
 
+    // スコア操作ボタン
     const minus = document.createElement("button");
     minus.textContent = "－";
     minus.className = "zoom-safe-button";
@@ -189,25 +192,39 @@ function render() {
     buttonGroup.className = "score-buttons";
     buttonGroup.append(minus, plus);
 
-    // ▼ ミッション入力欄をここで追加
+    // ミッション入力欄
+    if (!weeklyMissions[cat]) {
+      weeklyMissions[cat] = { target: "", cleared: null };
+    }
     const missionInput = document.createElement("input");
     missionInput.type = "text";
-    missionInput.placeholder = "ウィークリーミッションを入力";
-    missionInput.value = weeklyMissions[cat]?.target || "";
+    missionInput.placeholder = "ウィークリーミッション";
+    missionInput.value = weeklyMissions[cat].target || "";
     missionInput.style.marginLeft = "10px";
-    missionInput.style.width = "200px";
-
+    missionInput.style.width = "150px";
     missionInput.addEventListener("change", (e) => {
       weeklyMissions[cat].target = e.target.value;
       save();
     });
 
-    div.append(label, buttonGroup, missionInput);
+    // クリアチェックボックス
+    const missionCheck = document.createElement("input");
+    missionCheck.type = "checkbox";
+    missionCheck.checked = weeklyMissions[cat].cleared === true;
+    missionCheck.style.marginLeft = "5px";
+    missionCheck.addEventListener("change", (e) => {
+      weeklyMissions[cat].cleared = e.target.checked;
+      save();
+    });
+
+    // 要素追加
+    div.append(label, buttonGroup, missionInput, missionCheck);
     list.appendChild(div);
   }
 
   updateChart();
 }
+
 
 async function askMissionClearStatus() {
   for (let cat of categories) {
@@ -259,33 +276,19 @@ function checkLevelUp() {
   }
 }
 
-function setWeeklyMission(cat) {
-  const target = parseInt(prompt(`${cat} の週間目標を入力してください:`));
-  if (isNaN(target) || target < 0) return alert("正しい数値を入力してください");
-  weeklyMissions[cat] = { target: target, progress: 0 };
-  save();
-  alert(`${cat} のミッションを ${target} に設定しました`);
-}
-
-function updateMissionProgress(cat, delta) {
-  if (!weeklyMissions[cat]) weeklyMissions[cat] = { target: 0, progress: 0 };
-  weeklyMissions[cat].progress = Math.max(0, (weeklyMissions[cat].progress || 0) + delta);
-  save();
-}
-
 function checkWeekRollover() {
   const currentWeek = getCurrentWeek();
   if (lastWeek && lastWeek !== currentWeek.toString()) {
     for (let cat of categories) {
       const mission = weeklyMissions[cat];
       if (!mission) continue;
-      // クリア情報がない、またはfalseならペナルティ
+      // クリア情報がtrueなら＋3、それ以外は -5
       if (mission.cleared === true) {
         statusPoints[cat] = (statusPoints[cat] || 0) + 3;
       } else {
         statusPoints[cat] = Math.max(0, (statusPoints[cat] || 0) - 5);
       }
-      // ミッション状態をリセットし週番号更新
+      // ミッション状態リセット
       weeklyMissions[cat].cleared = null;
       weeklyMissions[cat].lastCheckWeek = currentWeek;
     }
