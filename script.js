@@ -145,8 +145,6 @@ function makeCategoryLabel(catName) {
   return label;
 }
 
-
-
 function enableEdit(labelElement, oldName) {
   const input = document.createElement("input");
   input.type = "text";
@@ -227,12 +225,17 @@ function render() {
       }
     });
 
-    // ラベル
-    const label = document.createElement("span");
-    label.textContent = `${cat}: ${scores[cat] || 0} pt`;
-    label.style.width = "30%";
-    label.style.cursor = "pointer";
-    label.onclick = () => enableEdit(label, cat);
+   const scoreRow = document.createElement("div");
+  scoreRow.className = "score-row";
+
+  // カテゴリ名ラベル（編集可能）
+  const label = document.createElement("span");
+  label.textContent = `${cat}: ${scores[cat] || 0} pt`;
+  label.className = "category-name";
+  label.style.cursor = "pointer";
+  label.onclick = () => enableEdit(label, cat);
+  scoreRow.appendChild(label);
+
 
     // スコア操作ボタン
     const minus = document.createElement("button");
