@@ -245,7 +245,7 @@ function render() {
 
 const menuBtn = document.getElementById("menuBtn");
 const gameMenu = document.getElementById("gameMenu");
-const assignArea = document.getElementById("assignCategoryArea");
+const assignCategoryArea = document.getElementById("assignCategoryArea");
 const closeMenuBtn = document.getElementById("closeMenuBtn");
 
 menuBtn.onclick = () => {
@@ -255,10 +255,12 @@ menuBtn.onclick = () => {
 
 closeMenuBtn.onclick = () => {
   gameMenu.style.display = "none";
-  assignArea.style.display = "none"; // 割り当て画面も同時に非表示
+  assignCategoryArea.style.display = "none"; // 割り当て画面も同時に非表示
   menuBtn.style.display = "inline-block"; // メニュー再表示
 };
 
+//カテゴリ割り当て
+document.getElementById("assignCategoryBtn").onclick = renderAssignCategories;
 
 async function askMissionClearStatus() {
   for (let cat of categories) {
@@ -343,45 +345,48 @@ function checkWeekRollover() {
 }
 
 function renderAssignCategories() {
-  const assignArea = document.getElementById("assignCategoryArea");
-  assignArea.innerHTML = ""; // 前回内容クリア
-  assignArea.style.display = "block";
+  assignCategoryArea.style.display = "block"; // ここを必ず表示
+  assignCategoryArea.innerHTML = ""; // 前の内容をクリア
 
-  for (const stat of statNames) {
+  for (let stat of statusNames) {
     const div = document.createElement("div");
     div.className = "assign-row";
+    div.style.display = "flex";
+    div.style.alignItems = "center";
+    div.style.marginBottom = "5px";
 
     const label = document.createElement("span");
-    label.textContent = `${stat}: `;
-    label.style.marginRight = "10px";
+    label.textContent = stat + ": ";
+    label.style.width = "50px";
 
     const select = document.createElement("select");
+    select.style.flex = "1";
     const defaultOption = document.createElement("option");
     defaultOption.value = "";
-    defaultOption.textContent = "-- 未選択 --";
+    defaultOption.textContent = "未割り当て";
     select.appendChild(defaultOption);
 
-    for (const cat of categories) {
+    for (let cat of categories) {
       const option = document.createElement("option");
       option.value = cat;
       option.textContent = cat;
-      if (statMapping[stat] === cat) option.selected = true;
       select.appendChild(option);
+      // 既に割り当て済みなら選択状態に
+      if (statusPoints[stat] === cat) {
+        option.selected = true;
+      }
     }
 
     select.onchange = () => {
-      statMapping[stat] = select.value || null;
-      localStorage.setItem("statMapping", JSON.stringify(statMapping));
-      renderStatus(); // 割り当て直後にステータス更新
+      statusPoints[stat] = select.value;
+      save(); // 必要なら localStorage に保存
+      renderStatus(); // ステータス更新
     };
 
     div.append(label, select);
-    assignArea.appendChild(div);
+    assignCategoryArea.appendChild(div);
   }
 }
-
-//カテゴリ割り当て
-document.getElementById("assignCategoryBtn").onclick = renderAssignCategories;
 
 //レベル計算
 function recalcLevel() {
