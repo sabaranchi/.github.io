@@ -320,7 +320,7 @@ function renderStatus() {
 
   for (let cat of categories) {
     const div = document.createElement("div");
-    div.innerHTML = `${cat}: ${statusVal} pt`;  
+    div.innerHTML = `${cat}: ${statusPoints} pt`;  
     statusArea.appendChild(div);
   }
 }
