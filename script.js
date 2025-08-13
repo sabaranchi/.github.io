@@ -233,7 +233,7 @@ function render() {
     });
 
     // 要素追加
-    div.append(label, buttonGroup, missionInput, missionCheck);
+    div.append(label, buttonGroup, missionLabel, missionCheck);
     list.appendChild(div);
   }
 
