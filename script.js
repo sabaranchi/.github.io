@@ -114,36 +114,29 @@ function updateScore(cat, delta) {
   render();
 }
 
-function makeCategoryLabel(catName) {
-  const label = document.createElement("span");
-  label.textContent = catName;
-  label.className = "category-name";
-  label.style.cursor = "pointer";
+function renameCategory(oldName) {
+  const newName = prompt(`「${oldName}」の新しい名前を入力:`);
+  if (!newName) return;
+  const trimmed = newName.trim();
+  if (!trimmed) return alert("名前が空です");
+  if (categories.includes(trimmed)) return alert("すでに存在しています");
 
-  label.onclick = () => {
-    const input = document.createElement("input");
-    input.type = "text";
-    input.value = catName;
-    input.className = "category-name";
-    input.style.width = "100px";
+  const idx = categories.indexOf(oldName);
+  if (idx !== -1) categories[idx] = trimmed;
 
-    input.onblur = () => {
-      const newName = input.value.trim();
-      if (!newName || newName === catName) return render(); // 空 or 変更なし
-      renameCategoryDirect(catName, newName); // ← ここでリネーム処理
-    };
+  scores[trimmed] = scores[oldName];
+  delete scores[oldName];
 
-    input.onkeydown = (e) => {
-      if (e.key === "Enter") input.blur();
-      if (e.key === "Escape") render();
-    };
+  if (pastScores[oldName] !== undefined) {
+    pastScores[trimmed] = pastScores[oldName];
+    delete pastScores[oldName];
+  }
 
-    label.replaceWith(input);
-    input.focus();
-  };
-
-  return label;
+  save();
+  render();
 }
+
+
 
 function enableEdit(labelElement, oldName) {
   const input = document.createElement("input");
@@ -152,46 +145,30 @@ function enableEdit(labelElement, oldName) {
   input.style.width = "50%";
   input.style.fontSize = "16px";
 
-  // 編集確定処理（共通化）
-  const confirmEdit = () => {
-    const newName = input.value.trim();
-    if (!newName || newName === oldName) return render();
-    if (categories.includes(newName)) return alert("すでに存在しています");
-
-    const idx = categories.indexOf(oldName);
-    if (idx !== -1) categories[idx] = newName;
-
-    scores[newName] = scores[oldName];
-    delete scores[oldName];
-
-    if (pastScores[oldName] !== undefined) {
-      pastScores[newName] = pastScores[oldName];
-      delete pastScores[oldName];
-    }
-
-    if (statusPoints[oldName] !== undefined) {
-      statusPoints[newName] = statusPoints[oldName];
-      delete statusPoints[oldName];
-    }
-
-    if (weeklyMissions[oldName] !== undefined) {
-      weeklyMissions[newName] = weeklyMissions[oldName];
-      delete weeklyMissions[oldName];
-    }
-
-    save();
-    render();
-  };
-
-  // Enterキーで確定、Escapeでキャンセル
+  // Enterキーで確定
   input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") confirmEdit();
-    if (e.key === "Escape") render();
+    if (e.key === "Enter") {
+      const newName = input.value.trim();
+      if (!newName) return alert("名前が空です");
+      if (categories.includes(newName)) return alert("すでに存在しています");
+
+      const idx = categories.indexOf(oldName);
+      if (idx !== -1) categories[idx] = newName;
+
+      scores[newName] = scores[oldName];
+      delete scores[oldName];
+
+      if (pastScores[oldName] !== undefined) {
+        pastScores[newName] = pastScores[oldName];
+        delete pastScores[oldName];
+      }
+
+      save();
+      render();
+    }
   });
 
-  // フォーカス外れでも確定
-  input.addEventListener("blur", confirmEdit);
-
+  // ラベルを input に置き換え
   labelElement.replaceWith(input);
   input.focus();
 }
@@ -225,17 +202,12 @@ function render() {
       }
     });
 
-   const scoreRow = document.createElement("div");
-  scoreRow.className = "score-row";
-
-  // カテゴリ名ラベル（編集可能）
-  const label = document.createElement("span");
-  label.textContent = `${cat}: ${scores[cat] || 0} pt`;
-  label.className = "category-name";
-  label.style.cursor = "pointer";
-  label.onclick = () => enableEdit(label, cat);
-  scoreRow.appendChild(label);
-
+    // ラベル
+    const label = document.createElement("span");
+    label.textContent = `${cat}: ${scores[cat] || 0} pt`;
+    label.style.width = "30%";
+    label.style.cursor = "pointer";
+    label.onclick = () => enableEdit(label, cat);
 
     // スコア操作ボタン
     const minus = document.createElement("button");
