@@ -440,6 +440,101 @@ function renderStatus() {
   }
 }
 
+let enemyQueue = [];  // 敵の順番
+let currentEnemyIndex = 0;
+
+function setupEnemies() {
+  if (!gameInitialized) return;
+
+  enemyQueue = [];
+
+  // 例: 各ステータスの目標値をもとに敵レベルを決定
+  const baseStats = {};
+  for (const cat in categoryTargets) {
+    baseStats[categoryToStatus[cat]] = categoryTargets[cat];
+  }
+
+  // 敵の強さを段階的に設定
+  for (let i = 0; i < 5; i++) {
+    enemyQueue.push(createEnemy(`スライム${i+1}`, baseStats, i));
+  }
+
+  // 中ボス
+  enemyQueue.push(createEnemy("ゴブリン中ボス", baseStats, 5, true));
+
+  // 敵＋中ボス＋ボス
+  for (let i = 6; i < 10; i++) {
+    enemyQueue.push(createEnemy(`スライム${i+1}`, baseStats, i));
+  }
+
+  enemyQueue.push(createEnemy("ドラゴンボス", baseStats, 10, true));
+  
+  currentEnemyIndex = 0;
+  startNextEnemy();
+}
+
+function createEnemy(name, baseStats, difficultyIndex, isBoss=false) {
+  const factor = 0.5 + 0.1 * difficultyIndex; // 段階的に強く
+  const multiplier = isBoss ? 1.5 : 1;
+  return {
+    name,
+    HP: Math.floor((baseStats.HP || 10) * factor * multiplier),
+    ATK: Math.floor((baseStats.ATK || 5) * factor * multiplier),
+    DEF: Math.floor((baseStats.DEF || 5) * factor * multiplier),
+    SPD: Math.floor((baseStats.SPD || 5) * factor * multiplier),
+    isBoss
+  };
+}
+
+function startNextEnemy() {
+  if (currentEnemyIndex >= enemyQueue.length) {
+    alert("全ての敵を倒した！ゲームクリア！");
+    return;
+  }
+  enemy = enemyQueue[currentEnemyIndex];
+  enemyHP = enemy.HP;
+  playerHP = calculateStatus().HP; // HP満タンで開始
+  logBattle(`${enemy.name}が現れた！`);
+  document.getElementById("attackBtn").disabled = false;
+  currentEnemyIndex++;
+}
+
+let gold = 0;
+
+function attack() {
+  const status = calculateStatus();
+  // プレイヤー攻撃
+  let damage = Math.max(1, status.ATK - enemy.DEF);
+  enemyHP -= damage;
+  logBattle(`あなたの攻撃！${damage}のダメージ！ 残り敵HP: ${enemyHP}`);
+
+  if (enemyHP <= 0) {
+    const reward = enemy.isBoss ? 50 : 10;
+    gold += reward;
+    logBattle(`${enemy.name}を倒した！ゴールド +${reward} (所持: ${gold})`);
+    startNextEnemy();
+    return;
+  }
+
+  // 敵攻撃
+  damage = Math.max(1, enemy.ATK - status.DEF);
+  playerHP -= damage;
+  logBattle(`${enemy.name}の攻撃！${damage}のダメージ！ 残りあなたのHP: ${playerHP}`);
+
+  if (playerHP <= 0) {
+    logBattle("あなたは倒れてしまった…");
+    document.getElementById("attackBtn").disabled = true;
+  }
+}
+
+// アイテム購入
+function buyPotion() {
+  if (gold < 10) { alert("ゴールドが足りない！"); return; }
+  gold -= 10;
+  playerHP = calculateStatus().HP;
+  alert("HP回復！");
+}
+
 
 let chart;
 

@@ -55,6 +55,19 @@
 
     <div id="assignCategoryArea" style="display:none; margin-top:10px;"></div>
 
+    <div id="gameInitArea" style="margin-top:20px;">
+      <h3>ゲーム初期化</h3>
+      <div id="categoryTargets"></div>
+      <button id="startGameBtn">ゲーム開始</button>
+    </div>
+
+    <div id="battleArea" style="display:none;">
+      <div id="battleLog"></div>
+      <button id="attackBtn" onclick="attack()">攻撃</button>
+      <button onclick="buyPotion()">HP回復アイテム購入(10G)</button>
+    </div>
+
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
