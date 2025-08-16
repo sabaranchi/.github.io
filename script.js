@@ -537,18 +537,19 @@ function startGame() {
   document.getElementById("startGameBtn").disabled = true;
 }
 
+
 function setupEnemies() {
+  /*
   enemyQueue = [];
   const baseStats = {};
 
+  // カテゴリ → ステータス
   for (const cat in categoryToStatus) {
     if (!cat || !categories.includes(cat)) continue;
     const stat = categoryToStatus[cat];
-    const targetPt = categoryTargets[cat] || 10; // ← 修正
+    const targetPt = categoryTargets[cat] || 10;
     baseStats[stat] = targetPt;
   }
-
-  console.log(baseStats);
 
   if (Object.keys(baseStats).length === 0) {
     alert("ステータスが未設定です！");
@@ -556,25 +557,59 @@ function setupEnemies() {
     return;
   }
 
-  // 敵生成
-  for (let i = 0; i < 5; i++) enemyQueue.push(createEnemy(`スライム${i+1}`, baseStats, i));
-  enemyQueue.push(createEnemy("ゴブリン中ボス", baseStats, 5, true));
-  for (let i = 6; i < 10; i++) enemyQueue.push(createEnemy(`スライム${i+1}`, baseStats, i));
-  enemyQueue.push(createEnemy("ドラゴンボス", baseStats, 10, true));
+  // スコアチェック：目標ポイントを超えたカテゴリ数
+  const clearedCount = Object.keys(categoryToStatus).filter(cat => {
+    const score = scores[cat] || 0;
+    const target = categoryTargets[cat] || 10;
+    return score >= target;
+  }).length;
+
+  const totalEnemies = 15; // 例: スライム・中ボス・ボスを含む総数
+  for (let i = 1; i <= totalEnemies; i++) {
+    let enemyName = `スライム${i}`;
+    let isBoss = false;
+
+    // 中ボスや最終ボス判定
+    if (i % 5 === 0) {
+      if (clearedCount >= 3 && i === totalEnemies) {
+        enemyName = "ドラゴンボス";
+        isBoss = true;
+      } else {
+        enemyName = `ゴブリン中ボス${i/5}`;
+        isBoss = true;
+      }
+    }
+
+    // 段階的にステータスを上げる
+    const factor = 1 + i * 0.1; // iが大きくなるほど強くなる
+    const enemyStats = {};
+    for (const stat in baseStats) {
+      enemyStats[stat] = Math.floor(baseStats[stat] * factor);
+    }
+
+    enemyQueue.push(createEnemy(enemyName, enemyStats, i, isBoss));
+  }
 
   currentEnemyIndex = 0;
   startNextEnemy();
+  */
+  currentEnemyIndex = 0; // 倒した敵の数を初期化
+  startNextEnemy();       // 最初の敵を生成
 }
 
-function createEnemy(name, baseStats, index, isBoss = false) {
+
+function createEnemy(name, stats, index, isBoss = false) {
   return {
     name: name,
-    HP: (baseStats.HP || 10) + index * 5,
-    ATK: baseStats.ATK || 5,
-    DEF: baseStats.DEF || 2,
+    HP: stats.HP,
+    maxHP: stats.HP,
+    ATK: stats.ATK,
+    DEF: stats.DEF,
+    SPD: stats.SPD,  // 追加
     isBoss: isBoss
   };
 }
+
 
 function logBattle(msg) {
   const logDiv = document.getElementById("battleLog");
@@ -583,14 +618,57 @@ function logBattle(msg) {
 }
 
 function startNextEnemy() {
-  if (currentEnemyIndex >= enemyQueue.length) {
-    alert("全ての敵を倒した！ゲームクリア！");
+  const i = currentEnemyIndex + 1; // 倒した敵数に応じた段階
+  const totalStages = 10;          // ボスに到達するまでの段階数
+  const stageFactor = Math.min(i / totalStages, 1); // 0→1で段階的上昇
+
+  // スコアチェック：目標ポイントを超えたカテゴリ数
+  const clearedCount = Object.keys(categoryToStatus).filter(cat => {
+    const score = scores[cat] || 0;
+    const target = categoryTargets[cat] || 10;
+    return score >= target;
+  }).length;
+
+  // 敵の名前とボス判定
+  let enemyName = `スライム${i}`;
+  let isBoss = false;
+  if (i % 5 === 0) {
+    if (clearedCount >= 3 && i > 10) { // 条件に応じて最終ボス出現
+      enemyName = "ドラゴンボス";
+      isBoss = true;
+    } else {
+      enemyName = `ゴブリン中ボス${i/5}`;
+      isBoss = true;
+    }
+  }
+
+    // カテゴリからステータス割り当て
+  const baseStats = {};
+  for (const cat in categoryToStatus) {
+    const stat = categoryToStatus[cat];
+    const targetPt = categoryTargets[cat] || 10;
+    baseStats[stat] = targetPt;
+  }
+
+  if (Object.keys(baseStats).length === 0) {
+    alert("ステータスが未設定です！");
+    renderAssignCategories();
     return;
   }
-  enemy = enemyQueue[currentEnemyIndex];
+
+  // 段階的強化：stageFactorを使って目標値に到達する
+  const enemyStats = {};
+  for (const stat in baseStats) {
+    const minVal = 1;           // 初期モンスターは最低1から
+    const maxVal = baseStats[stat]; // ボスステータスが目標
+    enemyStats[stat] = Math.floor(minVal + (maxVal - minVal) * stageFactor);
+  }
+
+  enemy = createEnemy(enemyName, enemyStats, i, isBoss);
   enemyHP = enemy.HP;
-  playerHP = calculateStatus().HP;
-  logBattle(`${enemy.name}が現れた！`);
+  playerHP = calculateStatus().HP; // プレイヤーHP満タンで開始
+  logBattle(`${enemy.name}が現れた！ (HP:${enemy.HP} ATK:${enemy.ATK} DEF:${enemy.DEF} SPD:${enemy.SPD})`);
+
   document.getElementById("attackBtn").disabled = false;
   currentEnemyIndex++;
 }
@@ -600,29 +678,45 @@ let gold = 0;
 
 function attack() {
   const status = calculateStatus();
-  // プレイヤー攻撃
-  let damage = Math.max(1, status.ATK - enemy.DEF);
-  enemyHP -= damage;
-  logBattle(`あなたの攻撃！${damage}のダメージ！ 残り敵HP: ${enemyHP}`);
+
+  // 先攻はSPDが高い方
+  const playerSPD = status.SPD || 5;
+  let playerFirst = playerSPD >= enemy.SPD;
+
+  function playerAttack() {
+    let damage = Math.max(1, status.ATK - enemy.DEF);
+    enemyHP -= damage;
+    logBattle(`あなたの攻撃！${damage}のダメージ！ 残り敵HP: ${enemyHP}`);
+  }
+
+  function enemyAttack() {
+    let damage = Math.max(1, enemy.ATK - status.DEF);
+    playerHP -= damage;
+    logBattle(`${enemy.name}の攻撃！${damage}のダメージ！ 残りあなたのHP: ${playerHP}`);
+  }
+
+  if (playerFirst) {
+    playerAttack();
+    if (enemyHP > 0) enemyAttack();
+  } else {
+    enemyAttack();
+    if (playerHP > 0) playerAttack();
+  }
 
   if (enemyHP <= 0) {
     const reward = enemy.isBoss ? 50 : 10;
     gold += reward;
     logBattle(`${enemy.name}を倒した！ゴールド +${reward} (所持: ${gold})`);
-    startNextEnemy();
+    startNextEnemy(); // 次の敵を生成
     return;
   }
-
-  // 敵攻撃
-  damage = Math.max(1, enemy.ATK - status.DEF);
-  playerHP -= damage;
-  logBattle(`${enemy.name}の攻撃！${damage}のダメージ！ 残りあなたのHP: ${playerHP}`);
 
   if (playerHP <= 0) {
     logBattle("あなたは倒れてしまった…");
     document.getElementById("attackBtn").disabled = true;
   }
 }
+
 
 // アイテム購入
 function buyPotion() {
