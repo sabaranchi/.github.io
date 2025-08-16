@@ -18,8 +18,15 @@ let playerLevel = parseInt(localStorage.getItem("playerLevel") || "0");
 const statusNames = ["ATK", "DEF", "HP", "MP", "SPD"];
 // カテゴリとステータスを紐付け{カテゴリ名: ステータス名}
 let categoryToStatus = JSON.parse(localStorage.getItem("categoryToStatus")) || {};
+let categoryTargets = {};
 // 例: { ATK: "体力", DEF: "防御力", HP: "体力", MP: "魔力", SPD: "敏捷" }
 let statMapping = JSON.parse(localStorage.getItem("statMapping")) || {}; 
+
+let enemyQueue = [];  // 敵の順番
+let currentEnemyIndex = 0;
+let enemy = null;
+let enemyHP = 0;
+let playerHP = 0;
 
 function getCurrentWeek() {
   const now = new Date();
@@ -45,6 +52,7 @@ function save() {
   localStorage.setItem("statusPoints", JSON.stringify(statusPoints));
   localStorage.setItem("weeklyMissions", JSON.stringify(weeklyMissions));
   localStorage.setItem("playerLevel", playerLevel);
+  localStorage.setItem("categoryToStatus", JSON.stringify(categoryToStatus)); // ← 追加
 }
 
 
@@ -202,9 +210,12 @@ function render() {
       }
     });
 
+    // --- ここを修正 ---
+    const targetPt = (categoryTargets && categoryTargets[cat]) || 10;
+
     // ラベル
     const label = document.createElement("span");
-    label.textContent = `${cat}: ${scores[cat] || 0} pt`;
+    label.textContent = `${cat}: ${scores[cat] || 0} / ${targetPt} pt`;
     label.style.width = "30%";
     label.style.cursor = "pointer";
     label.onclick = () => enableEdit(label, cat);
@@ -223,6 +234,19 @@ function render() {
     const buttonGroup = document.createElement("div");
     buttonGroup.className = "score-buttons";
     buttonGroup.append(minus, plus);
+
+    // 目標ポイント入力欄
+    const targetInput = document.createElement("input");
+    targetInput.type = "number";
+    targetInput.min = 1;
+    targetInput.value = targetPt;
+    targetInput.style.width = "60px";
+    targetInput.onchange = () => {
+      categoryTargets = categoryTargets || {}; // 念のため初期化
+      categoryTargets[cat] = Number(targetInput.value);
+      save();
+      render();
+    };
 
     // ミッション入力欄
     if (!weeklyMissions[cat]) {
@@ -261,7 +285,7 @@ function render() {
     });
 
     // 要素追加
-    div.append(label, buttonGroup, missionLabel, missionCheck);
+    div.append(label, buttonGroup,targetInput, missionLabel, missionCheck);
     list.appendChild(div);
   }
 
@@ -320,7 +344,7 @@ function calculateStatus() {
   const result = {};
   for (const stat of statusNames) {
     const cat = statusPoints[stat];
-    if (!cat) {
+    if (!cat || !categories.includes(cat)) {
       statusPoints[stat] = 0; // 未割り当ては0
     } else {
       // 各カテゴリのスコア + ミッションポイントを合計してステータスにする
@@ -386,18 +410,48 @@ function renderAssignCategories() {
       option.textContent = cat;
       select.appendChild(option);
       // 既に割り当て済みなら選択状態に
-      if (statusPoints[stat] === cat) {
+      if (categoryToStatus[cat] === stat) {
         option.selected = true;
       }
     }
 
+    select.onchange = () => {
+      const selectedCat = select.value;
+      // ステータス → カテゴリ
+      statusPoints[stat] = selectedCat || null;
+
+      // カテゴリ → ステータス
+      // まず、以前そのステータスに割り当てられていたカテゴリがあれば削除
+      for (let cat in categoryToStatus) {
+        if (categoryToStatus[cat] === stat) delete categoryToStatus[cat];
+      }
+
+      if (selectedCat) {
+        categoryToStatus[selectedCat] = stat;
+      }
+
+      save();
+      renderStatus();
+      recalcLevel();
+
+      if (gameInitialized) setupEnemies();
+    };
+
+/*
     select.onchange = () => {
       statusPoints[stat] = select.value; // ステータス → カテゴリ
       categoryToStatus[select.value] = stat; // カテゴリ → ステータス
       save(); // 必要なら localStorage に保存
       renderStatus(); // ステータス更新
       recalcLevel();// レベルも再計算
+      // 割り当てが変わったら、敵のベースポイントも更新
+      // ゲーム中の場合は次の敵から反映
+      if (gameInitialized) {
+        setupEnemies(); // 既存の敵は再生成して初期化
+      }
     };
+*/
+      
 
     div.append(label, select);
     assignCategoryArea.appendChild(div);
@@ -440,50 +494,92 @@ function renderStatus() {
   }
 }
 
-let enemyQueue = [];  // 敵の順番
-let currentEnemyIndex = 0;
+let gameInitialized = false;
+
+document.addEventListener("DOMContentLoaded", () => {
+  const startBtn = document.getElementById("startGameBtn");
+  console.log("startGame pressed");
+  if (!startBtn) { console.error("startGameBtn が見つかりません"); return; }
+  startBtn.onclick = () => startGame();
+});
+
+// 目標ポイントを収集（記録画面の入力値を反映）
+function gatherCategoryTargets() {
+  categoryTargets = {};
+  const rows = document.querySelectorAll("#recordArea .score-row");
+  rows.forEach(row => {
+    const cat = row.dataset.cat;
+    const input = row.querySelector("input[type='number']");
+    if (!cat || !input) return;
+    const value = Number(input.value) || 10;
+    categoryTargets[cat] = value;
+  });
+}
+
+function startGame() {
+  gatherCategoryTargets(); // 目標ポイントを集める
+
+  // ステータス割り当てがあるかチェック
+  const assigned = Object.values(categoryToStatus).filter(v => v);
+  console.log(categoryToStatus);
+  if (assigned.length === 0) {
+    alert("ステータスにカテゴリが割り当てられていません！");
+    renderAssignCategories();
+    return;
+  }
+
+  setupEnemies(); // 敵生成
+
+  document.getElementById("gameArea").style.display = "block";
+  document.getElementById("recordArea").style.display = "none";
+  document.getElementById("battleArea").style.display = "block";
+
+  document.getElementById("startGameBtn").disabled = true;
+}
 
 function setupEnemies() {
-  if (!gameInitialized) return;
-
   enemyQueue = [];
-
-  // 例: 各ステータスの目標値をもとに敵レベルを決定
   const baseStats = {};
-  for (const cat in categoryTargets) {
-    baseStats[categoryToStatus[cat]] = categoryTargets[cat];
+
+  for (const cat in categoryToStatus) {
+    if (!cat || !categories.includes(cat)) continue;
+    const stat = categoryToStatus[cat];
+    const targetPt = categoryTargets[cat] || 10; // ← 修正
+    baseStats[stat] = targetPt;
   }
 
-  // 敵の強さを段階的に設定
-  for (let i = 0; i < 5; i++) {
-    enemyQueue.push(createEnemy(`スライム${i+1}`, baseStats, i));
+  console.log(baseStats);
+
+  if (Object.keys(baseStats).length === 0) {
+    alert("ステータスが未設定です！");
+    renderAssignCategories();
+    return;
   }
 
-  // 中ボス
+  // 敵生成
+  for (let i = 0; i < 5; i++) enemyQueue.push(createEnemy(`スライム${i+1}`, baseStats, i));
   enemyQueue.push(createEnemy("ゴブリン中ボス", baseStats, 5, true));
-
-  // 敵＋中ボス＋ボス
-  for (let i = 6; i < 10; i++) {
-    enemyQueue.push(createEnemy(`スライム${i+1}`, baseStats, i));
-  }
-
+  for (let i = 6; i < 10; i++) enemyQueue.push(createEnemy(`スライム${i+1}`, baseStats, i));
   enemyQueue.push(createEnemy("ドラゴンボス", baseStats, 10, true));
-  
+
   currentEnemyIndex = 0;
   startNextEnemy();
 }
 
-function createEnemy(name, baseStats, difficultyIndex, isBoss=false) {
-  const factor = 0.5 + 0.1 * difficultyIndex; // 段階的に強く
-  const multiplier = isBoss ? 1.5 : 1;
+function createEnemy(name, baseStats, index, isBoss = false) {
   return {
-    name,
-    HP: Math.floor((baseStats.HP || 10) * factor * multiplier),
-    ATK: Math.floor((baseStats.ATK || 5) * factor * multiplier),
-    DEF: Math.floor((baseStats.DEF || 5) * factor * multiplier),
-    SPD: Math.floor((baseStats.SPD || 5) * factor * multiplier),
-    isBoss
+    name: name,
+    HP: (baseStats.HP || 10) + index * 5,
+    ATK: baseStats.ATK || 5,
+    DEF: baseStats.DEF || 2,
+    isBoss: isBoss
   };
+}
+
+function logBattle(msg) {
+  const logDiv = document.getElementById("battleLog");
+  logDiv.innerHTML += msg + "<br>";
+  logDiv.scrollTop = logDiv.scrollHeight;
 }
 
 function startNextEnemy() {
@@ -493,11 +589,12 @@ function startNextEnemy() {
   }
   enemy = enemyQueue[currentEnemyIndex];
   enemyHP = enemy.HP;
-  playerHP = calculateStatus().HP; // HP満タンで開始
+  playerHP = calculateStatus().HP;
   logBattle(`${enemy.name}が現れた！`);
   document.getElementById("attackBtn").disabled = false;
   currentEnemyIndex++;
 }
+
 
 let gold = 0;
 
@@ -580,3 +677,13 @@ function updateChart() {
 
 render();
 
+
+/*
+カテゴリを割り当ててゲーム開始ボタンを押してるのにステータスが未設定です！とでる
+攻撃を押しても何も起きない
+敵のレベル、ステータスが表示されない
+ゲームを初期化を押した後に、カテゴリを追加すると反映されない（記録画面に戻ったら、gameareaで最初開いてなかったものは閉じてほしい）
+目標ポイントで、ステータスに割り当てたカテゴリを、
+
+
+*/
