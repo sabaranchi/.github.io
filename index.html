@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>習慣管理アプリ</title>
+  <title>習慣管理app</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="manifest.json" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -50,6 +50,7 @@
 
     <div id="gameMenu" style="display:none; margin-top:20px; border:1px solid #ccc; padding:10px;">
       <button id="assignCategoryBtn">カテゴリ割り当て</button>
+      <button id="resetProgressBtn">ゲームのセーブデータを消去</button>
       <button id="closeMenuBtn">閉じる</button>
     </div>
 
@@ -58,9 +59,9 @@
     <button id="startGameBtn">ゲーム開始</button>
 
     <div id="battleArea" style="display:none;">
-      <div id="battleLog"></div>
       <button id="attackBtn" onclick="attack()">攻撃</button>
       <button onclick="buyPotion()">HP回復アイテム購入(10G)</button>
+      <div id="battleLog" style="height:300px; overflow-y:auto; border:1px solid #ccc; padding:5px;"></div>
     </div>
   </div>
 

@@ -28,6 +28,9 @@ let enemy = null;
 let enemyHP = 0;
 let playerHP = 0;
 
+let savePoint = 0;      // 最高到達ステージ (中ボスごと)
+
+
 function getCurrentWeek() {
   const now = new Date();
   const oneJan = new Date(now.getFullYear(), 0, 1);
@@ -296,6 +299,7 @@ const menuBtn = document.getElementById("menuBtn");
 const gameMenu = document.getElementById("gameMenu");
 const assignCategoryArea = document.getElementById("assignCategoryArea");
 const closeMenuBtn = document.getElementById("closeMenuBtn");
+const resetProgress = document.getElementById("resetProgressBtn");
 
 menuBtn.onclick = () => {
   menuBtn.style.display = "none"; // メニューボタン非表示
@@ -434,7 +438,7 @@ function renderAssignCategories() {
       renderStatus();
       recalcLevel();
 
-      if (gameInitialized) setupEnemies();
+      if (gameInitialized) startNextEnemy();
     };
 
 /*
@@ -447,7 +451,7 @@ function renderAssignCategories() {
       // 割り当てが変わったら、敵のベースポイントも更新
       // ゲーム中の場合は次の敵から反映
       if (gameInitialized) {
-        setupEnemies(); // 既存の敵は再生成して初期化
+        startNextEnemy(); // 既存の敵は再生成して初期化
       }
     };
 */
@@ -496,12 +500,31 @@ function renderStatus() {
 
 let gameInitialized = false;
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => { 
   const startBtn = document.getElementById("startGameBtn");
-  console.log("startGame pressed");
-  if (!startBtn) { console.error("startGameBtn が見つかりません"); return; }
-  startBtn.onclick = () => startGame();
+  if (!startBtn) { 
+    console.error("startGameBtn が見つかりません"); 
+    return; 
+  }
+
+  startBtn.onclick = () => {
+    console.log("startGame pressed");
+
+    // セーブポイントがあればロード
+    const saved = localStorage.getItem("savePoint");
+    if (saved) {
+      savePoint = Number(saved);
+      currentEnemyIndex = savePoint;
+      logBattle(`セーブ地点 (ステージ${savePoint}) から再開します！`);
+    } else {
+      savePoint = 0;
+      currentEnemyIndex = 0;
+    }
+
+    startGame();
+  };
 });
+
 
 // 目標ポイントを収集（記録画面の入力値を反映）
 function gatherCategoryTargets() {
@@ -528,73 +551,20 @@ function startGame() {
     return;
   }
 
-  setupEnemies(); // 敵生成
+  // バトルログをクリア
+  document.getElementById("battleLog").innerHTML = "";
+
+  // セーブ地点（チェックポイント）を確認
+  currentEnemyIndex = savePoint;
+  
+  
+  startNextEnemy(); // 敵生成
 
   document.getElementById("gameArea").style.display = "block";
   document.getElementById("recordArea").style.display = "none";
   document.getElementById("battleArea").style.display = "block";
 
   document.getElementById("startGameBtn").disabled = true;
-}
-
-
-function setupEnemies() {
-  /*
-  enemyQueue = [];
-  const baseStats = {};
-
-  // カテゴリ → ステータス
-  for (const cat in categoryToStatus) {
-    if (!cat || !categories.includes(cat)) continue;
-    const stat = categoryToStatus[cat];
-    const targetPt = categoryTargets[cat] || 10;
-    baseStats[stat] = targetPt;
-  }
-
-  if (Object.keys(baseStats).length === 0) {
-    alert("ステータスが未設定です！");
-    renderAssignCategories();
-    return;
-  }
-
-  // スコアチェック：目標ポイントを超えたカテゴリ数
-  const clearedCount = Object.keys(categoryToStatus).filter(cat => {
-    const score = scores[cat] || 0;
-    const target = categoryTargets[cat] || 10;
-    return score >= target;
-  }).length;
-
-  const totalEnemies = 15; // 例: スライム・中ボス・ボスを含む総数
-  for (let i = 1; i <= totalEnemies; i++) {
-    let enemyName = `スライム${i}`;
-    let isBoss = false;
-
-    // 中ボスや最終ボス判定
-    if (i % 5 === 0) {
-      if (clearedCount >= 3 && i === totalEnemies) {
-        enemyName = "ドラゴンボス";
-        isBoss = true;
-      } else {
-        enemyName = `ゴブリン中ボス${i/5}`;
-        isBoss = true;
-      }
-    }
-
-    // 段階的にステータスを上げる
-    const factor = 1 + i * 0.1; // iが大きくなるほど強くなる
-    const enemyStats = {};
-    for (const stat in baseStats) {
-      enemyStats[stat] = Math.floor(baseStats[stat] * factor);
-    }
-
-    enemyQueue.push(createEnemy(enemyName, enemyStats, i, isBoss));
-  }
-
-  currentEnemyIndex = 0;
-  startNextEnemy();
-  */
-  currentEnemyIndex = 0; // 倒した敵の数を初期化
-  startNextEnemy();       // 最初の敵を生成
 }
 
 
@@ -613,9 +583,15 @@ function createEnemy(name, stats, index, isBoss = false) {
 
 function logBattle(msg) {
   const logDiv = document.getElementById("battleLog");
+  if (!logDiv) return;
+
+  // メッセージを追記
   logDiv.innerHTML += msg + "<br>";
+
+  // 自動スクロール：最新のメッセージが下端に来る
   logDiv.scrollTop = logDiv.scrollHeight;
 }
+
 
 function startNextEnemy() {
   const i = currentEnemyIndex + 1; // 倒した敵数に応じた段階
@@ -707,13 +683,14 @@ function attack() {
     const reward = enemy.isBoss ? 50 : 10;
     gold += reward;
     logBattle(`${enemy.name}を倒した！ゴールド +${reward} (所持: ${gold})`);
+    onEnemyDefeated();
     startNextEnemy(); // 次の敵を生成
     return;
   }
 
   if (playerHP <= 0) {
-    logBattle("あなたは倒れてしまった…");
-    document.getElementById("attackBtn").disabled = true;
+    onPlayerDeath();
+    return;
   }
 }
 
@@ -724,6 +701,53 @@ function buyPotion() {
   gold -= 10;
   playerHP = calculateStatus().HP;
   alert("HP回復！");
+}
+
+function onEnemyDefeated() {
+  if (currentEnemyIndex % 5 == 0) {
+    savePoint = currentEnemyIndex; 
+    localStorage.setItem("savePoint", savePoint);
+    logBattle(`💾 セーブポイント更新！ (ステージ${savePoint})`);
+  }
+}
+
+function onPlayerDeath() {
+  logBattle("あなたは倒れてしまった…");
+  // ボタンを無効化
+  document.getElementById("attackBtn").disabled = true;
+  // 少し遅らせて開始画面に戻す
+  setTimeout(() => {
+    alert("ゲームオーバー！ 開始画面に戻ります");
+
+  // ゲーム画面を隠す
+  document.getElementById("gameArea").style.display = "none";
+  document.getElementById("battleArea").style.display = "none";
+
+  document.getElementById("startGameBtn").disabled = false;
+  // 記録画面（開始画面）を表示    
+  document.getElementById("gameArea").style.display = "block";
+  }, 100);
+
+}
+
+resetProgress.onclick = () => {
+  gold = 0;
+  savePoint = 0;
+  localStorage.removeItem("savePoint");
+
+  setTimeout(() => {
+    alert("進行状況をリセットしました！");
+
+    document.getElementById("battleArea").style.display = "none";
+
+    gameMenu.style.display = "none";
+    assignCategoryArea.style.display = "none"; // 割り当て画面も同時に非表示
+    
+    menuBtn.style.display = "inline-block"; // メニュー再表示
+    document.getElementById("startGameBtn").disabled = false;
+    // 記録画面（開始画面）を表示    
+    document.getElementById("gameArea").style.display = "block";
+  }, 100);
 }
 
 
@@ -773,10 +797,7 @@ render();
 
 
 /*
-カテゴリを割り当ててゲーム開始ボタンを押してるのにステータスが未設定です！とでる
-攻撃を押しても何も起きない
-敵のレベル、ステータスが表示されない
-ゲームを初期化を押した後に、カテゴリを追加すると反映されない（記録画面に戻ったら、gameareaで最初開いてなかったものは閉じてほしい）
+ゲームで進むことができた最高到達点を記録、表示したい
 目標ポイントで、ステータスに割り当てたカテゴリを、
 
 
