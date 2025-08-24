@@ -39,6 +39,8 @@
         <button onclick="deleteCategories()">削除</button>
       </div>
         
+      <div id="calendarArea" style="margin-top: 30px;"></div>
+
       <!-- ゲーム画面への遷移ボタン -->
       <div class="buttons">
         <button onclick="goToGame()">🎮 ゲーム画面へ</button>
@@ -48,8 +50,10 @@
 
   <!-- ゲーム画面（初期は非表示） -->
   <div id="gameArea" class="container" style="display: none; margin-top: 30px;">
-    <h2>ステータス画面</h2>
-    <div id="statusList"></div>
+    <div id="statusWrapper" style="display: flex; gap: 20px;">
+      <div id="statusList"></div>
+      <div id="statUpgradeArea" style="display: none;"></div>
+    </div>
 
     <button onclick="goToRecord()">記録画面に戻る</button>
 
@@ -67,7 +71,9 @@
 
     <div id="battleArea" style="display:none;">
       <button id="attackBtn" onclick="attack()">攻撃</button>
-      <button onclick="buyPotion()">HP回復アイテム購入(10G)</button>
+      <button onclick="healWithMP()">回復（MP消費）</button>
+      <button onclick="buyPotion()">MP回復</button>
+      <button onclick="showStatUpgrade()">鍛える</button>
       <div id="battleLog" style="height:300px; overflow-y:auto; border:1px solid #ccc; padding:5px;"></div>
     </div>
   </div>

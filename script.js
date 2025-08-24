@@ -26,28 +26,40 @@ let enemyQueue = [];  // 敵の順番
 let currentEnemyIndex = 0;
 let enemy = null;
 let enemyHP = 0;
-let playerHP = 0;
+let playerHP;
+let playerMP; 
+let statusMultipliers = JSON.parse(localStorage.getItem("statusMultipliers")) || {
+  HP: 1,
+  MP:1,
+  ATK: 1,
+  DEF: 1,
+  SPD: 1
+};
 
 let savePoint = 0;      // 最高到達ステージ (中ボスごと)
-
+let dailyLog = JSON.parse(localStorage.getItem("dailyLog")) || {};
 
 function getCurrentWeek() {
-  const now = new Date();
-  const oneJan = new Date(now.getFullYear(), 0, 1);
-  return Math.ceil(((now - oneJan) / 86400000 + oneJan.getDay() + 1) / 7);
+  const date = new Date();
+  const target = new Date(date.valueOf());
+  const dayNr = (date.getDay() + 6) % 7; // 月曜始まりに変換（0=月曜）
+  target.setDate(target.getDate() - dayNr + 3); // 木曜基準に調整
+
+  const firstThursday = new Date(target.getFullYear(), 0, 4);
+  const weekNumber = Math.ceil(((target - firstThursday) / 86400000 + 1) / 7);
+  return weekNumber;
 }
 
 function checkWeekRollover() {
   const currentWeek = getCurrentWeek();
   if (lastWeek && lastWeek !== currentWeek.toString()) {
+    console.log("週が変わったので過去スコアを保存:", scores); // ← 追加
     pastScores = { ...scores };
     localStorage.setItem("pastScores", JSON.stringify(pastScores));
     alert("週が変わったので、過去スコアを更新しました！");
   }
   localStorage.setItem("lastUpdatedWeek", currentWeek.toString());
 }
-
-checkWeekRollover();
 
 function save() {
   localStorage.setItem("categories", JSON.stringify(categories));
@@ -91,6 +103,10 @@ function deleteCategories() {
 
 function updateScore(cat, delta) {
   scores[cat] = Math.max(0, (scores[cat] || 0) + delta);
+  const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
+  if (!dailyLog[today]) dailyLog[today] = {};
+  dailyLog[today][cat] = (dailyLog[today][cat] || 0) + delta;
+  localStorage.setItem("dailyLog", JSON.stringify(dailyLog));
   recalcLevel();
   renderStatus();  // ステータス再描画
   save();
@@ -292,7 +308,25 @@ function render() {
     list.appendChild(div);
   }
 
+  function renderCalendar() {
+    const container = document.getElementById("calendarArea");
+    container.innerHTML = "<h2>履歴</h2>";
+
+    const dates = Object.keys(dailyLog).sort().reverse(); // 新しい順
+    for (const date of dates) {
+      const entry = dailyLog[date];
+      const div = document.createElement("div");
+      div.style.marginBottom = "10px";
+      div.innerHTML = `<strong>${date}</strong><br>`;
+      for (const [cat, val] of Object.entries(entry)) {
+        div.innerHTML += `・${cat}: ${val}pt<br>`;
+      }
+      container.appendChild(div);
+    }
+  }
+
   updateChart();
+  renderCalendar(); // ← これを追加
 }
 
 const menuBtn = document.getElementById("menuBtn");
@@ -354,7 +388,11 @@ function calculateStatus() {
       // 各カテゴリのスコア + ミッションポイントを合計してステータスにする
       const score = scores[cat] || 0;
       const mp = missionPoints[cat] || 0;
-      result[stat] = score + mp;
+      const multiplier = statusMultipliers[stat] || 1;
+
+      // スコア + ミッションポイント に倍率をかける
+      result[stat] = Math.floor((score + mp) * multiplier);
+
     }
   }
   return result;
@@ -516,9 +554,32 @@ document.addEventListener("DOMContentLoaded", () => {
       savePoint = Number(saved);
       currentEnemyIndex = savePoint;
       logBattle(`セーブ地点 (ステージ${savePoint}) から再開します！`);
+
+      // Goldの復元
+      const savedGold = localStorage.getItem("gold");
+      if (savedGold !== null) {
+        gold = Number(savedGold);
+        logBattle(`所持Gold: ${gold} を復元しました`);
+      }
+
+      // ステータス倍率の復元
+      const savedMultipliers = localStorage.getItem("statusMultipliers");
+      if (savedMultipliers) {
+        statusMultipliers = JSON.parse(savedMultipliers);
+        logBattle(`ステータス倍率を復元しました`);
+      }
+
     } else {
       savePoint = 0;
       currentEnemyIndex = 0;
+      gold = 0;
+      statusMultipliers = {
+        HP: 1,
+        MP: 1,
+        ATK: 1,
+        DEF: 1,
+        SPD: 1
+      };
     }
 
     startGame();
@@ -595,7 +656,7 @@ function logBattle(msg) {
 
 function startNextEnemy() {
   const i = currentEnemyIndex + 1; // 倒した敵数に応じた段階
-  const totalStages = 10;          // ボスに到達するまでの段階数
+  const totalStages = 1000000;          // ボスに到達するまでの段階数
   const stageFactor = Math.min(i / totalStages, 1); // 0→1で段階的上昇
 
   // スコアチェック：目標ポイントを超えたカテゴリ数
@@ -609,7 +670,7 @@ function startNextEnemy() {
   let enemyName = `スライム${i}`;
   let isBoss = false;
   if (i % 5 === 0) {
-    if (clearedCount >= 3 && i > 10) { // 条件に応じて最終ボス出現
+    if (clearedCount >= 3 && i % 25 === 0) { // 条件に応じて最終ボス出現
       enemyName = "ドラゴンボス";
       isBoss = true;
     } else {
@@ -635,14 +696,27 @@ function startNextEnemy() {
   // 段階的強化：stageFactorを使って目標値に到達する
   const enemyStats = {};
   for (const stat in baseStats) {
-    const minVal = 1;           // 初期モンスターは最低1から
-    const maxVal = baseStats[stat]; // ボスステータスが目標
-    enemyStats[stat] = Math.floor(minVal + (maxVal - minVal) * stageFactor);
+    // stat に対応するカテゴリを探す
+    const cat = Object.keys(categoryToStatus).find(c => categoryToStatus[c] === stat);
+    // 最大値を目標値にする（上限をかけてもOK）  
+    const maxVal = categoryTargets[cat] || 10;
+
+    const base = 1; // 初期ステータス
+    enemyStats[stat] = base + i; // 倒すごとに +1
+    if(enemyStats[stat] >= maxVal) enemyStats[stat] = maxVal;
   }
+
+
 
   enemy = createEnemy(enemyName, enemyStats, i, isBoss);
   enemyHP = enemy.HP;
-  playerHP = calculateStatus().HP; // プレイヤーHP満タンで開始
+  if (playerHP === undefined) {
+    playerHP = calculateStatus().HP; // 初回のみ満タン
+  }
+
+  if (playerMP === undefined) {
+    playerMP = calculateStatus().MP; // 初回のみ満タン
+  }
   logBattle(`${enemy.name}が現れた！ (HP:${enemy.HP} ATK:${enemy.ATK} DEF:${enemy.DEF} SPD:${enemy.SPD})`);
 
   document.getElementById("attackBtn").disabled = false;
@@ -668,7 +742,7 @@ function attack() {
   function enemyAttack() {
     let damage = Math.max(1, enemy.ATK - status.DEF);
     playerHP -= damage;
-    logBattle(`${enemy.name}の攻撃！${damage}のダメージ！ 残りあなたのHP: ${playerHP}`);
+    logBattle(`${enemy.name}の攻撃！${damage}のダメージ！ 残りあなたのHP: ${playerHP}  残りあなたのMP: ${playerMP}`);
   }
 
   if (playerFirst) {
@@ -694,25 +768,45 @@ function attack() {
   }
 }
 
-
 // アイテム購入
 function buyPotion() {
-  if (gold < 10) { alert("ゴールドが足りない！"); return; }
-  gold -= 10;
-  playerHP = calculateStatus().HP;
-  alert("HP回復！");
+  if (gold < 50) { alert("ゴールドが足りない！"); return; }
+  gold -= 50;
+  playerMP += 15;
+  logBattle(`Goldを50消費してMPを15回復！`);
+  logBattle(`残りあなたのHP: ${playerHP}  残りあなたのMP: ${playerMP}  残りあなたのGold: ${gold}`);
+}
+
+function upgradeStat(stat) {
+  const baseCost = 30;
+  const currentMultiplier = statusMultipliers[stat] || 1;
+  const level = Math.floor((currentMultiplier - 1) / 0.2);
+  const cost = baseCost + level * 20;
+
+  if (gold < cost) {
+    logBattle(`${stat}強化に必要なGoldが足りません！（必要: ${cost}G）`);
+    return;
+  }
+
+  gold -= cost;
+  statusMultipliers[stat] = +(currentMultiplier + 0.1).toFixed(1); // 小数第1位まで
+  localStorage.setItem("statusMultipliers", JSON.stringify(statusMultipliers));
+  localStorage.setItem("gold", gold);
+  logBattle(`${stat}の倍率を強化！ → x${statusMultipliers[stat].toFixed(1)}（残Gold: ${gold}）`);
 }
 
 function onEnemyDefeated() {
   if (currentEnemyIndex % 5 == 0) {
     savePoint = currentEnemyIndex; 
     localStorage.setItem("savePoint", savePoint);
+    localStorage.setItem("gold", gold);
+    localStorage.setItem("statusMultipliers", JSON.stringify(statusMultipliers));
     logBattle(`💾 セーブポイント更新！ (ステージ${savePoint})`);
   }
 }
 
 function onPlayerDeath() {
-  logBattle("あなたは倒れてしまった…");
+  logBattle("あなたは倒れてしまった…ゴールドの半分を失った");
   // ボタンを無効化
   document.getElementById("attackBtn").disabled = true;
   // 少し遅らせて開始画面に戻す
@@ -725,6 +819,9 @@ function onPlayerDeath() {
 
   document.getElementById("startGameBtn").disabled = false;
   // 記録画面（開始画面）を表示    
+  gold = gold /2 ;
+  playerHP = calculateStatus().HP;
+  playerMP = calculateStatus().MP;
   document.getElementById("gameArea").style.display = "block";
   }, 100);
 
@@ -734,6 +831,15 @@ resetProgress.onclick = () => {
   gold = 0;
   savePoint = 0;
   localStorage.removeItem("savePoint");
+
+  statusMultipliers = {
+    HP: 1,
+    MP: 1,
+    ATK: 1,
+    DEF: 1,
+    SPD: 1
+  };
+  localStorage.setItem("statusMultipliers", JSON.stringify(statusMultipliers));
 
   setTimeout(() => {
     alert("進行状況をリセットしました！");
@@ -750,6 +856,36 @@ resetProgress.onclick = () => {
   }, 100);
 }
 
+function healWithMP() {
+  const healCost = 3;       // MP消費量
+  const healAmount = 15;    // 回復量
+
+  if (playerMP < healCost) {
+    logBattle("MPが足りません！");
+    return;
+  }
+
+  playerMP -= healCost;
+  playerHP = Math.min(playerHP + healAmount, calculateStatus().HP); // 最大HPを超えないように
+  logBattle(`MPを${healCost}消費してHPを${healAmount}回復！`);
+  logBattle(`残りあなたのHP: ${playerHP}  残りあなたのMP: ${playerMP}`);
+}
+
+function showStatUpgrade() {
+  const area = document.getElementById("statUpgradeArea");
+  area.style.display = "block";
+
+  // 中身が空ならボタン群を追加（初回のみ）
+  if (!area.innerHTML.trim()) {
+    area.innerHTML = `
+      <button class="small-button" onclick="upgradeStat('ATK')">ATK強化</button><br>
+      <button class="small-button" onclick="upgradeStat('DEF')">DEF強化</button><br>
+      <button class="small-button" onclick="upgradeStat('HP')">HP強化</button><br>
+      <button class="small-button" onclick="upgradeStat('MP')">MP強化</button><br>
+      <button class="small-button" onclick="upgradeStat('SPD')">SPD強化</button>
+    `;
+  }
+}
 
 let chart;
 
@@ -793,6 +929,7 @@ function updateChart() {
   });
 }
 
+checkWeekRollover();
 render();
 
 

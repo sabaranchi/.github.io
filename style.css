@@ -53,6 +53,12 @@ button {
   gap: 8px;
 }
 
+.small-button {
+  font-size: 12px;
+  padding: 2px 4px;
+  margin: 2px;
+}
+
 /* PC/タブレット（従来どおりフレックス横並び） */
 .score-row {
   display: flex;
