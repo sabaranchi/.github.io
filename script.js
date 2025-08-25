@@ -257,55 +257,32 @@ function render() {
     */
     const targetPt = (categoryTargets && categoryTargets[cat]) || 10;
 
-    // ラベル全体（横並び構成にするなら flex 推奨）
-    const label = document.createElement("span");
-    label.style.display = "inline-flex";
-    //label.style.width = "30%";
-    label.style.cursor = "pointer";
-    label.onclick = () => enableEdit(label, cat);
+    // カテゴリ名ラベル
+    const scoreLabel = document.createElement("span");
+    scoreLabel.className = "score-label";
+    scoreLabel.textContent = `${cat}: `;
 
-    // スコア表示部分
-    const scoreSpan = document.createElement("span");
-    scoreSpan.textContent = `${cat} `;
-    label.appendChild(scoreSpan);
-
-    // 目標ポイント表示兼編集欄
-    const targetWrapper = document.createElement("span");
-    targetWrapper.style.display = "inline-flex";
-    targetWrapper.style.gap = "4px";
-
-    // 表示モード（テキスト）
+    // スコア / 目標表示（編集可能）
     const targetDisplay = document.createElement("span");
-    targetDisplay.textContent = `${scores[cat] || 0} /${targetPt} pt`;
-    targetDisplay.style.fontSize = "16px";
-    targetDisplay.style.cursor = "pointer";
     targetDisplay.className = "target-display";
-
-    // 編集モードに切り替え
+    targetDisplay.textContent = `${scores[cat] || 0} / ${targetPt} pt`;
+    targetDisplay.style.cursor = "pointer";
     targetDisplay.onclick = () => {
       const input = document.createElement("input");
       input.type = "number";
       input.min = 1;
       input.value = targetPt;
-      input.style.width = "40px";
-      input.style.fontSize = "16px";
       input.className = "target-input";
-
       input.onblur = () => {
-        categoryTargets = categoryTargets || {};
         categoryTargets[cat] = Number(input.value);
         save();
-        render(); // 再描画で表示モードに戻す
+        render();
       };
-
       targetDisplay.replaceWith(input);
       input.focus();
     };
 
-    targetWrapper.appendChild(targetDisplay);
-    label.appendChild(targetWrapper);
-
-    // スコア操作ボタン
+    // ±ボタン
     const minus = document.createElement("button");
     minus.textContent = "－";
     minus.className = "zoom-safe-button";
@@ -320,14 +297,14 @@ function render() {
     buttonGroup.className = "score-buttons";
     buttonGroup.append(minus, plus);
 
-    // ミッション入力欄
+    // ミッション表示ラベル（編集可能）
     if (!weeklyMissions[cat]) {
       weeklyMissions[cat] = { target: "", cleared: null };
     }
-    // ミッション表示ラベル
+
     const missionLabel = document.createElement("span");
-    missionLabel.textContent = `${weeklyMissions[cat].target || "ミッション未設定"}`;
     missionLabel.className = "mission-label";
+    missionLabel.textContent = weeklyMissions[cat].target || "ミッション未設定";
     missionLabel.onclick = () => {
       const input = document.createElement("input");
       input.type = "text";
@@ -335,29 +312,26 @@ function render() {
       input.className = "mission-label";
       input.style.width = "100px";
       input.onblur = () => {
-        weeklyMissions[cat] = weeklyMissions[cat] || {};
         weeklyMissions[cat].target = input.value;
         save();
-        render(); // 再描画でラベルに戻す
+        render();
       };
       missionLabel.replaceWith(input);
       input.focus();
     };
 
-
-    // クリアチェックボックス
+    // チェックボックス
     const missionCheck = document.createElement("input");
     missionCheck.type = "checkbox";
     missionCheck.className = "mission-check";
     missionCheck.checked = weeklyMissions[cat]?.cleared || false;
     missionCheck.addEventListener("change", (e) => {
-      weeklyMissions[cat] = weeklyMissions[cat] || {};
       weeklyMissions[cat].cleared = e.target.checked;
       save();
     });
 
-    // 要素追加
-    div.append(label, targetWrapper, buttonGroup, missionLabel, missionCheck);
+    // 要素追加（順番が重要）
+    div.append(scoreLabel, targetDisplay, buttonGroup, missionLabel, missionCheck);
     list.appendChild(div);
   }
 
