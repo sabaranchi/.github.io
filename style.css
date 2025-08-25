@@ -90,6 +90,12 @@ button {
   white-space: nowrap;
 }
 
+.score-row .target-input {
+  font-size: 12px;
+  width: 40px;
+  padding: 2px 4px;
+}
+
 /* チェックボックス */
 .score-row .mission-check {
   width: 20px;

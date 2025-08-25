@@ -229,6 +229,7 @@ function render() {
       }
     });
 
+    /*
     // --- ここを修正 ---
     const targetPt = (categoryTargets && categoryTargets[cat]) || 10;
 
@@ -238,6 +239,71 @@ function render() {
     label.style.width = "30%";
     label.style.cursor = "pointer";
     label.onclick = () => enableEdit(label, cat);
+
+    // 目標ポイント入力欄
+    const targetInput = document.createElement("input");
+    targetInput.type = "number";
+    targetInput.min = 1;
+    targetInput.value = targetPt;
+    targetInput.style.width = "40px",
+    targetInput.style.cursor = "pointer";
+    targetInput.onclick = () => enableEdit(label, cat);
+    targetInput.onchange = () => {
+      categoryTargets = categoryTargets || {}; // 念のため初期化
+      categoryTargets[cat] = Number(targetInput.value);
+      save();
+      render();
+    };
+    */
+    const targetPt = (categoryTargets && categoryTargets[cat]) || 10;
+
+    // ラベル全体（横並び構成にするなら flex 推奨）
+    const label = document.createElement("span");
+    label.style.display = "inline-flex";
+    //label.style.width = "30%";
+    label.style.cursor = "pointer";
+    label.onclick = () => enableEdit(label, cat);
+
+    // スコア表示部分
+    const scoreSpan = document.createElement("span");
+    scoreSpan.textContent = `${cat} `;
+    label.appendChild(scoreSpan);
+
+    // 目標ポイント表示兼編集欄
+    const targetWrapper = document.createElement("span");
+    targetWrapper.style.display = "inline-flex";
+    targetWrapper.style.gap = "4px";
+
+    // 表示モード（テキスト）
+    const targetDisplay = document.createElement("span");
+    targetDisplay.textContent = `${scores[cat] || 0} /${targetPt} pt`;
+    targetDisplay.style.fontSize = "16px";
+    targetDisplay.style.cursor = "pointer";
+    targetDisplay.className = "target-display";
+
+    // 編集モードに切り替え
+    targetDisplay.onclick = () => {
+      const input = document.createElement("input");
+      input.type = "number";
+      input.min = 1;
+      input.value = targetPt;
+      input.style.width = "40px";
+      input.style.fontSize = "16px";
+      input.className = "target-input";
+
+      input.onblur = () => {
+        categoryTargets = categoryTargets || {};
+        categoryTargets[cat] = Number(input.value);
+        save();
+        render(); // 再描画で表示モードに戻す
+      };
+
+      targetDisplay.replaceWith(input);
+      input.focus();
+    };
+
+    targetWrapper.appendChild(targetDisplay);
+    label.appendChild(targetWrapper);
 
     // スコア操作ボタン
     const minus = document.createElement("button");
@@ -253,19 +319,6 @@ function render() {
     const buttonGroup = document.createElement("div");
     buttonGroup.className = "score-buttons";
     buttonGroup.append(minus, plus);
-
-    // 目標ポイント入力欄
-    const targetInput = document.createElement("input");
-    targetInput.type = "number";
-    targetInput.min = 1;
-    targetInput.value = targetPt;
-    targetInput.style.width = "60px";
-    targetInput.onchange = () => {
-      categoryTargets = categoryTargets || {}; // 念のため初期化
-      categoryTargets[cat] = Number(targetInput.value);
-      save();
-      render();
-    };
 
     // ミッション入力欄
     if (!weeklyMissions[cat]) {
@@ -304,7 +357,7 @@ function render() {
     });
 
     // 要素追加
-    div.append(label, buttonGroup,targetInput, missionLabel, missionCheck);
+    div.append(label, targetWrapper, buttonGroup, missionLabel, missionCheck);
     list.appendChild(div);
   }
 
