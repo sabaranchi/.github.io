@@ -260,7 +260,9 @@ function render() {
     // カテゴリ名ラベル
     const scoreLabel = document.createElement("span");
     scoreLabel.className = "score-label";
-    scoreLabel.textContent = `${cat}: `;
+    scoreLabel.textContent = `${cat}`;
+    scoreLabel.style.cursor = "pointer";
+    scoreLabel.onclick = () => enableEdit(scoreLabel, cat);
 
     // スコア / 目標表示（編集可能）
     const targetDisplay = document.createElement("span");
@@ -271,6 +273,7 @@ function render() {
       const input = document.createElement("input");
       input.type = "number";
       input.min = 1;
+      input.style.fontSize = "16px";
       input.value = targetPt;
       input.className = "target-input";
       input.onblur = () => {
