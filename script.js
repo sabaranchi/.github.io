@@ -229,38 +229,13 @@ function render() {
       }
     });
 
-    /*
-    // --- ここを修正 ---
-    const targetPt = (categoryTargets && categoryTargets[cat]) || 10;
-
-    // ラベル
-    const label = document.createElement("span");
-    label.textContent = `${cat}: ${scores[cat] || 0} / ${targetPt} pt`;
-    label.style.width = "30%";
-    label.style.cursor = "pointer";
-    label.onclick = () => enableEdit(label, cat);
-
-    // 目標ポイント入力欄
-    const targetInput = document.createElement("input");
-    targetInput.type = "number";
-    targetInput.min = 1;
-    targetInput.value = targetPt;
-    targetInput.style.width = "40px",
-    targetInput.style.cursor = "pointer";
-    targetInput.onclick = () => enableEdit(label, cat);
-    targetInput.onchange = () => {
-      categoryTargets = categoryTargets || {}; // 念のため初期化
-      categoryTargets[cat] = Number(targetInput.value);
-      save();
-      render();
-    };
-    */
     const targetPt = (categoryTargets && categoryTargets[cat]) || 10;
 
     // カテゴリ名ラベル
     const scoreLabel = document.createElement("span");
     scoreLabel.className = "score-label";
     scoreLabel.textContent = `${cat}`;
+    scoreLabel.style.width = "30%";
     scoreLabel.style.cursor = "pointer";
     scoreLabel.onclick = () => enableEdit(scoreLabel, cat);
 
