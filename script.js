@@ -230,7 +230,7 @@ function render() {
       }
     });
 
-    const targetPt = (categoryTargets && categoryTargets[cat]) || 10;
+    const targetPt = (categoryTargets && categoryTargets[cat]);// || 10;
 
     // カテゴリ名ラベル
     const scoreLabel = document.createElement("span");
@@ -689,7 +689,7 @@ function startNextEnemy() {
   const baseStats = {};
   for (const cat in categoryToStatus) {
     const stat = categoryToStatus[cat];
-    const targetPt = categoryTargets[cat] || 10;
+    const targetPt = categoryTargets[cat];// || 10;
     baseStats[stat] = targetPt;
   }
 
@@ -702,14 +702,11 @@ function startNextEnemy() {
   // 段階的強化：stageFactorを使って目標値に到達する
   const enemyStats = {};
   for (const stat in baseStats) {
-    // stat に対応するカテゴリを探す
-    const cat = Object.keys(categoryToStatus).find(c => categoryToStatus[c] === stat);
     // 最大値を目標値にする（上限をかけてもOK）  
-    const maxVal = categoryTargets[cat] || 10;
-
+    const maxVal = Number(baseStats[stat]);
+    // stat に対応するカテゴリを探す
     const base = 1; // 初期ステータス
-    enemyStats[stat] = base + i; // 倒すごとに +1
-    if(enemyStats[stat] >= maxVal) enemyStats[stat] = maxVal;
+    enemyStats[stat] = Math.min(base + i, maxVal);
   }
 
 
