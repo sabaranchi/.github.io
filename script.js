@@ -595,15 +595,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // 目標ポイントを収集（記録画面の入力値を反映）
 function gatherCategoryTargets() {
-  categoryTargets = {};
-  const rows = document.querySelectorAll("#recordArea .score-row");
-  rows.forEach(row => {
-    const cat = row.dataset.cat;
-    const input = row.querySelector("input[type='number']");
-    if (!cat || !input) return;
-    const value = Number(input.value) || 10;
-    categoryTargets[cat] = value;
-  });
+  const stored = localStorage.getItem("categoryTargets");
+  categoryTargets = stored ? JSON.parse(stored) : {};
 }
 
 function startGame() {
@@ -701,12 +694,12 @@ function startNextEnemy() {
 
   // 段階的強化：stageFactorを使って目標値に到達する
   const enemyStats = {};
-  for (const stat in baseStats) {
-    // 最大値を目標値にする（上限をかけてもOK）  
-    const maxVal = Number(baseStats[stat]);
-    // stat に対応するカテゴリを探す
-    const base = 1; // 初期ステータス
-    enemyStats[stat] = Math.min(base + i, maxVal);
+  for (const cat in categoryToStatus) {
+    const stat = categoryToStatus[cat];
+    const maxVal = Number(categoryTargets[cat]) || 10; // 目標ポイントを上限に
+    const base = 1;
+    const value = base + i; // 成長値（倒した敵数に応じて）
+    enemyStats[stat] = Math.min(value, maxVal); // 上限を超えないように制限
   }
 
 
@@ -873,6 +866,33 @@ function healWithMP() {
   playerHP = Math.min(playerHP + healAmount, calculateStatus().HP); // 最大HPを超えないように
   logBattle(`MPを${healCost}消費してHPを${healAmount}回復！`);
   logBattle(`残りあなたのHP: ${playerHP}  残りあなたのMP: ${playerMP}`);
+}
+
+function heal() {
+  const status = calculateStatus();
+
+  // 先攻はSPDが高い方
+  const playerSPD = status.SPD || 5;
+  let playerFirst = playerSPD >= enemy.SPD;
+
+  function enemyAttack() {
+    let damage = Math.max(1, enemy.ATK - status.DEF);
+    playerHP -= damage;
+    logBattle(`${enemy.name}の攻撃！${damage}のダメージ！ 残りあなたのHP: ${playerHP}  残りあなたのMP: ${playerMP}`);
+  }
+
+  if (playerFirst) {
+    healWithMP();
+    if (enemyHP > 0) enemyAttack();
+  } else {
+    enemyAttack();
+    if (playerHP > 0) healWithMP();
+  }
+
+  if (playerHP <= 0) {
+    onPlayerDeath();
+    return;
+  }
 }
 
 function showStatUpgrade() {
