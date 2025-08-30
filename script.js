@@ -18,7 +18,7 @@ let playerLevel = parseInt(localStorage.getItem("playerLevel") || "0");
 const statusNames = ["ATK", "DEF", "HP", "MP", "SPD"];
 // カテゴリとステータスを紐付け{カテゴリ名: ステータス名}
 let categoryToStatus = JSON.parse(localStorage.getItem("categoryToStatus")) || {};
-let categoryTargets = {};
+const categoryTargets = JSON.parse(localStorage.getItem("categoryTargets")) || {};
 // 例: { ATK: "体力", DEF: "防御力", HP: "体力", MP: "魔力", SPD: "敏捷" }
 let statMapping = JSON.parse(localStorage.getItem("statMapping")) || {}; 
 
