@@ -65,6 +65,7 @@ function save() {
   localStorage.setItem("categories", JSON.stringify(categories));
   localStorage.setItem("scores", JSON.stringify(scores));
   localStorage.setItem("statusPoints", JSON.stringify(statusPoints));
+  localStorage.setItem("categoryTargets", JSON.stringify(categoryTargets));
   localStorage.setItem("weeklyMissions", JSON.stringify(weeklyMissions));
   localStorage.setItem("playerLevel", playerLevel);
   localStorage.setItem("categoryToStatus", JSON.stringify(categoryToStatus)); // ← 追加
@@ -773,7 +774,7 @@ function attack() {
   }
 }
 
-// アイテム購入
+/* アイテム購入
 function buyPotion() {
   if (gold < 50) { alert("ゴールドが足りない！"); return; }
   gold -= 50;
@@ -781,6 +782,7 @@ function buyPotion() {
   logBattle(`Goldを50消費してMPを15回復！`);
   logBattle(`残りあなたのHP: ${playerHP}  残りあなたのMP: ${playerMP}  残りあなたのGold: ${gold}`);
 }
+*/
 
 function upgradeStat(stat) {
   const baseCost = 30;
